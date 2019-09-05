@@ -1,6 +1,8 @@
 import Data.List
+import Data.Char
 import Test.QuickCheck    
 import Lab1
+import Control.Monad (replicateM)
 
 
 -- Exercise 1: Time: 45 minutes if you include installing haskell and starting up :)
@@ -80,4 +82,95 @@ reversePrimes = takeWhile (< 10000) (filter(\ n -> prime (reversal n)) primes)
 -}
 
 
--- Exercise 5: Time: 15 min
+-- Exercise 5: Time: 20 min
+sumOfPrimes = head (filter(\ n -> prime n) [sum (take 101 (drop n primes)) | n <- [1..]])
+
+{-
+ * Yes you have to test wether this answer is correct.
+ * You cannot be sure that the function you implemented is correct.
+ * A way to test this is to calculate it by hand but even that can have mistakes.
+ * Another way could to compare you answer with your peers, of course this only works during this course.  
+-}
+
+-- Exercise 6: Time: 15 min
+conjectureMul n = product (take n primes) + 1
+
+testConjecture = take 10 (filter (\ n -> prime n == False) [conjectureMul n | n <- [1..]])
+
+-- Exercise 7: Time: 45 min
+luhn :: Integer -> Bool
+luhn n = 
+    let nums = reverse ([digitToInt x | x <- show n])
+    in sum ([if odd i then luhnHelper (x*2) else x | (i, x) <- zip [0..] nums]) `mod` 10 == 0
+
+luhnHelper :: Int -> Int
+luhnHelper x | x > 9 = x - 9
+             | x <= 9 = x
+
+isAmericanExpress :: Integer -> Bool
+isAmericanExpress n = 
+    let l = length [x | x <- show n]
+        lValid = l == 15
+        iin = read (take 2 (show n)) :: Integer
+        iinValid = iin == 37 || iin == 34
+    in iinValid && lValid
+
+isMaster :: Integer -> Bool
+isMaster n =
+    let l = length [x | x <- show n]
+        lValid = l == 16
+        iinLength = [2, 4]
+        iin = [read (take x (show n)) :: Integer | x <- iinLength ]
+        iinValidFunc = filter (\ n -> (n >= 51 && n <= 55) || (n >= 2221 && n <= 2720))
+        iinValid = length (iinValidFunc iin) >= 1
+    in iinValid && lValid
+
+isVisa :: Integer -> Bool
+isVisa n = 
+    let l = length [x | x <- show n]
+        lValid = l == 16
+        iin = read (take 1 (show n)) :: Integer
+        iinValid = iin == 4
+    in iinValid && lValid
+
+
+-- Exercise 8: Time: 100 min
+
+accuses :: Boy -> Boy -> Bool
+accuses Matthew Carl = False
+accuses Matthew Matthew = False
+accuses Matthew _ = True 
+
+accuses Peter Matthew = True
+accuses Peter Jack = True
+accuses Peter _ = False
+
+accuses Jack x = not (accuses Matthew x) && not (accuses Peter x)
+
+accuses Arnold x = accuses Matthew x /= accuses Peter x 
+
+accuses Carl x = not (accuses Arnold x)
+
+accusers :: Boy -> [Boy]
+accusers boy = [b | b <- boys, accuses b boy]
+
+
+checkRequirements suspect liars = all (== True) [if elem x liars 
+                                   then not (accuses x suspect) 
+                                   else accuses x suspect 
+                                   | x <- boys]
+
+findCulprit = head (filter (\ (n, _, _) -> n == True) [(checkRequirements b x, b, x) | b <- boys, x <- listPermutations boys 2])
+
+listPermutations :: [a] -> Integer -> [[a]]
+listPermutations _ 0      = [[]]
+listPermutations [] _     = []
+listPermutations (x:xs) n = fmap (x:) (listPermutations xs (n - 1)) ++ listPermutations xs n
+
+guilty :: [Boy]
+guilty = [(\ (_, x, _) -> x) findCulprit]
+
+honest :: [Boy]
+honest = let
+            xs = (\ (_, _, x) -> x) findCulprit
+         in filter (\ x -> not (elem x xs)) boys
