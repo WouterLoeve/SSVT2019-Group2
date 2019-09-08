@@ -1,4 +1,3 @@
-
 module Lab1 where
 import Data.List
 import Test.QuickCheck    
@@ -25,4 +24,3 @@ data Boy = Matthew | Peter | Jack | Arnold | Carl
            deriving (Eq,Show)
 
 boys = [Matthew, Peter, Jack, Arnold, Carl]
-
