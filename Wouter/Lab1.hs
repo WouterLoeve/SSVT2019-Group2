@@ -1,7 +1,7 @@
 
 module Lab1 where
 import Data.List
-import Test.QuickCheck    
+import Test.QuickCheck 
 
 prime :: Integer -> Bool
 prime n = n > 1 && all (\ x -> rem n x /= 0) xs
