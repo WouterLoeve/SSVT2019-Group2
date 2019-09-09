@@ -3,6 +3,8 @@ import Data.List
 import Test.QuickCheck
 import Data.Char
 
+main = do putStrLn "Please use with GHCI"
+
 genPositiveIntegers :: Gen Int
 genPositiveIntegers = abs <$> (arbitrary :: Gen Int) `suchThat` (> 0)
 
