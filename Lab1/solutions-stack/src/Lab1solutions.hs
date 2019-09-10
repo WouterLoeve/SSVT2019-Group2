@@ -89,11 +89,11 @@ reversiblePrimes :: [Integer]
 reversiblePrimes = takeWhile (< 10000) (filter (prime . reversal) primes)
 
 {-
- * Either find a library implementation which you are sure works ;) 
+ * Either find a library implementation which you are sure works
  * Find the list that statisfies these condtions on the internet
  * Or do it by hand
  * Do note that all of these methods are very sub optimal. 
- * You cant really be sure of that the library function works fully without proving it mathematically.
+ * You can't really be sure of that the library function works fully without proving it mathematically.
  * It's possible that this list is not available online.
  * Doing it by hand would logically be very tiresome.
 -}
