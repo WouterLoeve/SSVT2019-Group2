@@ -29,7 +29,7 @@ library:
 
 executables:
   solutions-stack-exe:
-    main:                Lab1-solutions.hs
+    main:                Main.hs
     source-dirs:         app
     ghc-options:
     - -threaded

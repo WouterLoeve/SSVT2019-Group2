@@ -1,11 +1,10 @@
+module Lab1solutions where
 import Lab1
 import Data.List
 import Test.QuickCheck
 import Data.Char
 import Text.JSON.Generic
 import Text.Printf
-
-main = do putStrLn "Please use with GHCI"
 
 genPositiveIntegers :: Gen Int
 genPositiveIntegers = abs <$> (arbitrary :: Gen Int) `suchThat` (> 0)
@@ -279,23 +278,25 @@ honest = let
 {- 
  * Bonus
  * Euler 9
+ * Answer: 31875000
 -}
-euler9 :: ((Integer, Integer, Integer), Integer)
+euler9 :: Integer
 euler9 =
-    let 
-        xs = [1..500]
-    in head [((a, b, c), a*b*c) | a <- xs, b <- xs, c <- xs, a < c, b < c, a^2 + b^2 == c^2, a + b + c==1000]
+    head [a*b*c | c <- [1..500], b <- [1..c], a <- [1..b], a^2 + b^2 == c^2, a + b + c==1000]
 
 
 {-
  * Bonus
  * Euler 10
+ * Answer: 142913828922
 -}
+euler10 :: Integer
 euler10 = sum (takeWhile (<2000000) primes)
 
 {-
  * Bonus
  * Euler 49
+ * Answer: 296962999629
 -}
 sameElements :: (Eq a) => [a] -> [a] -> Bool
 sameElements x y = null (x \\ y) && null (y \\ x)
