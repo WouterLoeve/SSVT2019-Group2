@@ -280,10 +280,11 @@ honest = let
  * Bonus
  * Euler 9
 -}
+euler9 :: ((Integer, Integer, Integer), Integer)
 euler9 =
     let 
         xs = [1..500]
-    in [(a, b, c) | a <- xs, b <- xs, c <- xs, a^2+b^2==c^2, a+b+c==1000]
+    in head [((a, b, c), a*b*c) | a <- xs, b <- xs, c <- xs, a < c, b < c, a^2 + b^2 == c^2, a + b + c==1000]
 
 
 {-
@@ -292,18 +293,19 @@ euler9 =
 -}
 euler10 = sum (takeWhile (<2000000) primes)
 
--- sameElements :: (Eq a) => [a] -> [a] -> Bool
--- sameElements x y = null (x \\ y) && null (y \\ x)
-
--- checkSequence n = [a | a <- [1..9999], (sameElements a a+n) && (sameElements a+n (a+2*n)) && prime a && prime (a+n) && prime (a+(2*n))]
-
--- euler49 = [checkSequence a | a <- [1..]]
 {-
-The arithmetic sequence, 1487, 4817, 8147, in which each of the terms increases by 3330, is unusual in two ways: 
-(i) each of the three terms are prime, and, 
-(ii) each of the 4-digit numbers are permutations of one another.
-There are no arithmetic sequences made up of three 1-, 2-, or 3-digit primes, exhibiting this property, 
-but there is one other 4-digit increasing sequence.
-
-What 12-digit number do you form by concatenating the three terms in this sequence?
+ * Bonus
+ * Euler 49
 -}
+sameElements :: (Eq a) => [a] -> [a] -> Bool
+sameElements x y = null (x \\ y) && null (y \\ x)
+
+checkSequence :: Integer -> [Integer]
+checkSequence n = [a | a <- [1000..9999], (sameElements (digits a) (digits (a+n))), (sameElements (digits (a+n)) (digits (a+(2*n)))), prime a, prime (a+n), prime (a+2*n)]
+
+euler49 :: String
+euler49 = 
+    let 
+        start = checkSequence 3330 !! 1
+        snd = (start + 3330)
+    in show start ++ show snd ++ show (snd+3330)
