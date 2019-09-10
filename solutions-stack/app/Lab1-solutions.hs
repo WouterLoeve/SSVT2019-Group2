@@ -2,6 +2,8 @@ import Lab1
 import Data.List
 import Test.QuickCheck
 import Data.Char
+import Text.JSON.Generic
+import Text.Printf
 
 main = do putStrLn "Please use with GHCI"
 
@@ -162,9 +164,74 @@ isVisa n = luhn n
     where l = digits n
 
 {- 
- * Test design
+ * Tests
 -}
 
+testMastercardCorrect :: String
+testMastercardCorrect = 
+    let nums = [5569529620568055, 5472887618656159, 
+                5236849953749038, 5203832230045379, 
+                5164860703923613, 5197557698575371, 
+                5204240503838299, 5362977367866993, 
+                5509016394433883, 5307347394793966]
+    in printf "Validated Correct MasterCard test %d / %d" (length (filter (==True) [isMaster x | x <- nums])) (length nums)
+
+testMastercardWrong :: String    
+testMastercardWrong = 
+    let nums = [5569529620568054, 5472887618656158, 
+                5236849953748038, 5203832230045378, 
+                5164860603923613, 5197557698575370, 
+                5204240503738299, 5362977367866992, 
+                5509006394433883, 5307347394793965]
+    in printf "Validated Incorrect MasterCard test %d / %d" (length (filter (==False) [isMaster x | x <- nums])) (length nums)
+
+testVisaCorrect :: String
+testVisaCorrect =
+    let nums = [4485671656947391, 4916414782911976, 
+                4532207748348158, 4959666344196184, 
+                4716065903358810, 4485975018489202, 
+                4716636136055322, 4929403223670452, 
+                4929886258966250, 4485295175387812]
+    in printf "Validated Correct Visa test %d / %d" (length (filter (==True) [isVisa x | x <- nums])) (length nums)
+    
+
+testVisaWrong :: String
+testVisaWrong =
+    let nums = [4485671656947390, 4916414782911975, 
+                4532207748348157, 4959666344196183, 
+                4716065903358819, 4485975018489201, 
+                4716636136055321, 4929403223670451, 
+                4929886258966259, 4485295175387811]
+    in printf "Validated Incorrect Visa test %d / %d" (length (filter (==False) [isVisa x | x <- nums])) (length nums)
+
+testAmericanCorrect :: String
+testAmericanCorrect =
+     let nums = [342045679384653, 344606141970896, 
+                 343814242652717, 378344379264654, 
+                 379352002963872, 348215618498203,
+                 345218770356873, 340015371909224, 
+                 375267441092261, 375805143520889]
+    in printf "Validated Correct American Express test %d / %d" (length (filter (==True) [isAmericanExpress x | x <- nums])) (length nums)
+
+testAmericanWrong :: String
+testAmericanWrong =
+     let nums = [342045679384652, 344606141870896, 
+                 343814242552717, 378344379164654, 
+                 379352002863872, 348215618488203,
+                 345217770356873, 340015371909124, 
+                 375267440092261, 375805143520789]
+    in printf "Validated Incorrect American Express test %d / %d" (length (filter (==False) [isAmericanExpress x | x <- nums])) (length nums)
+
+{- 
+ * The functions above test our AmericanExpress, Visa and Mastercard validators.
+ * We got the test data from a third party: http://www.getcreditcardnumbers.com/
+ * We tested the output of our functions on both right and wrong credit cards.
+ * In our limited sample size we found that our False Positives and False Negatives 
+ * were both equal to zero while our True Positives and True negatives were equal 
+ * to the length of our sample size (10 respectively).
+ * This assumes that the third party testing data is actually correct because you 
+ * can't get around this fact with the resources we have been provided with.
+-}
 
 {- 
  * Exercise 8
@@ -208,3 +275,35 @@ honest :: [Boy]
 honest = let
             xs = (\ (_, _, x) -> x) findCulprit
          in filter (`notElem` xs) boys
+
+{- 
+ * Bonus
+ * Euler 9
+-}
+euler9 =
+    let 
+        xs = [1..500]
+    in [(a, b, c) | a <- xs, b <- xs, c <- xs, a^2+b^2==c^2, a+b+c==1000]
+
+
+{-
+ * Bonus
+ * Euler 10
+-}
+euler10 = sum (takeWhile (<2000000) primes)
+
+-- sameElements :: (Eq a) => [a] -> [a] -> Bool
+-- sameElements x y = null (x \\ y) && null (y \\ x)
+
+-- checkSequence n = [a | a <- [1..9999], (sameElements a a+n) && (sameElements a+n (a+2*n)) && prime a && prime (a+n) && prime (a+(2*n))]
+
+-- euler49 = [checkSequence a | a <- [1..]]
+{-
+The arithmetic sequence, 1487, 4817, 8147, in which each of the terms increases by 3330, is unusual in two ways: 
+(i) each of the three terms are prime, and, 
+(ii) each of the 4-digit numbers are permutations of one another.
+There are no arithmetic sequences made up of three 1-, 2-, or 3-digit primes, exhibiting this property, 
+but there is one other 4-digit increasing sequence.
+
+What 12-digit number do you form by concatenating the three terms in this sequence?
+-}
