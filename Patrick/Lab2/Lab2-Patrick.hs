@@ -108,7 +108,7 @@ testIsPermutation =
     (isPermutation [1.5,2.4,3.3] [2.4,1.5,3.3]) &&
     not (isPermutation [1.5,2.4,3.3] [2.4,1.3,3.5])
 
--- Exercise 5: Recognizing and generating derangements
+-- Exercise 5: Recognizing and generating derangements, time spent: 1 hour
 isDerangement :: Eq a => [a] -> [a] -> Bool
 isDerangement a b = isPermutation a b && all (==True) [x/=y | (x,y)<-(zip a b)]
 
@@ -133,16 +133,45 @@ curryLength n = listLength [1,2,3,4] n
 -- permutation
 -- list length
 
--- Exercise 6: Implementing and testing ROT13 encoding
+-- Exercise 6: Implementing and testing ROT13 encoding, time spent: 45 mins
 -- Specification
--- ROT13 maps an input character in [A..Z]++[a..z] to 
--- an output character in [N..Z]++[A..M]++[n..z]++[a..m] (the index stays the same)
-rot13' s | (c >= 65) && (c <= 77) = chr (c+13)
-        | (c >= 78) && (c <= 90) = chr (c-13)
-        | (c >= 97) && (c <= 109) = chr (c+13)
-        | (c >= 110) && (c <= 122) = chr (c-13)
-        | otherwise = '?'
-        where c = ord s
+-- ROT13 maps an input character in the range [A..Z]++[a..z] to 
+-- an output character in the range [N..Z]++[A..M]++[n..z]++[a..m]
+-- It is not specified what should happen to an input character outside of the range [A..Z]++[a..z]
+rot13' s | s `elem` (['A'..'M']++['a'..'m']) = chr (ord s + 13)
+        | s `elem` (['N'..'Z']++['n'..'z']) = chr (ord s - 13)
+        | otherwise = ' '
 rot13 s = [rot13' c | c <- s]
 
--- TODO
+
+-- Excercise 7: implementing IBAN, time spent: 1 hour
+--iban :: String -> Bool
+countryCodes = ["AX", "AL", "AD", "AT", "AZ", "BH", "BY", "BE", "BA", "BR", "BG",
+                "CR", "HR", "CY", "CZ", "DK", "DO", "SV", "EE", "FO", "FI", "FR",
+                "GE", "DE", "GI", "GR", "GL", "GT", "VA", "HU", "IS", "IQ", "IE",
+                "IL", "IT", "JO", "KZ", "XK", "KW", "LV", "LB", "LI", "LT", "LU",
+                "MT", "MR", "MU", "MD", "MC", "ME", "NL", "MK", "NO", "PK", "PS",
+                "PL", "PT", "QA", "RO", "LC", "SM", "ST", "SA", "RS", "SC", "SK",
+                "SI", "ES", "SE", "CH", "TL", "TN", "TR", "UA", "AE", "GB", "VG"]
+
+countryLength = [18, 28, 24, 20, 28, 22, 28, 16, 20, 29, 22, 22, 21, 28, 24, 18, 28,
+                 28, 20, 18, 18, 27, 22, 22, 23, 27, 18, 28, 22, 28, 26, 23, 22,
+                 23, 27, 30, 20, 20, 30, 21, 28, 21, 20, 20, 31, 27, 30, 24, 27,
+                 22, 18, 19, 15, 24, 29, 28, 25, 29, 24, 32, 27, 25, 24, 22, 31,
+                 24, 19, 24, 24, 21, 23, 24, 26, 29, 23, 22, 24]
+
+ibanCheckHelper s = let q = [fst a | a <- zip countryLength countryCodes, snd a == (take 2 s)] in
+    (length s) == (if length q == 0 then 0 else head q)
+
+ibanParseHelper s = let inp = [if isLetter c then ord (toUpper c) - 55 else digitToInt c | c <- s] in
+    read (intercalate "" ([show a | a <- inp])) :: Integer
+
+iban inp | ibanCheckHelper inp = let num = filter (/=' ') inp in
+    let s = ibanParseHelper (filter (/=' ') ((drop 4 num) ++ (take 4 num))) in
+    (s `mod` 97) == 1
+         | otherwise = False
+
+testIbanNums = ["AX2112345600000785", "AL47212110090000000235698741", "AD1200012030200359100100", "AD1200012030200359100100", "AT611904300234573201", "BY13NBRB3600900000002Z00AB00", "BE68539007547034", "BA391290079401028494", "BG80BNBG96611020345678", "HR1210010051863000160", "CY17002001280000001200527600", "CZ6508000000192000145399", "DK5000400440116243", "EE382200221020145685", "FO2000400440116243", "FI2112345600000785", "FR1420041010050500013M02606", "DE89370400440532013000", "GI75NWBK000000007099453", "GR1601101250000000012300695", "GL2000400440116243", "HU42117730161111101800000000", "IS140159260076545510730339", "IE29AIBK93115212345678", "IT60X0542811101000000123456", "XK051212012345678906", "LV80BANK0000435195001", "LI21088100002324013AA", "LU280019400644750000", "MK07250120000058984", "MT84MALT011000012345MTLCAST001S", "MD24AG000225100013104168", "MC5811222000010123456789030", "ME25505000012345678951", "NL91ABNA0417164300", "NO9386011117947", "PL61109010140000071219812874", "PT50000201231234567890154", "RO49AAAA1B31007593840000", "SM86U0322509800000000270100", "RS35260005601001611379", "SK3112000000198742637541", "ES9121000418450200051332", "SI56191000000123438", "SE4550000000058398257466", "CH9300762011623852957", "GB29NWBK60161331926819", "AZ21NABZ00000000137010001944", "BH67BMAG00001299123456", "BR1800000000141455123924100C2", "VG96VPVG0000012345678901"]
+
+testIban = 
+    all (==True) [iban x | x <- testIbanNums]
