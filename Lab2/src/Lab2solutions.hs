@@ -57,17 +57,29 @@ triangle a b c
     | otherwise = Other
     where [a', b', c'] = sort [a, b, c]
 
-testTriangle :: Bool
-testTriangle = all (== NoTriangle) (triangle3 <$> concat (permutations <$> [[1,1,3], [3,3,8], [42, 42, 96]]))
-            && all (== Equilateral) (triangle3 <$> concat (permutations <$> [[1,1,1], [3,3,3], [42, 42, 42]]))
-            && all (== Rectangular) (triangle3 <$> concat (permutations <$> [[3,4,5], [6,8,10], [10, 24, 26]]))
-            && all (== Isosceles) (triangle3 <$> concat (permutations <$> [[1,1,2], [3,3,4], [42, 42, 64]]))
-            && all (== Other) (triangle3 <$> concat (permutations <$> [[1,2,3], [2,3,4], [42, 48, 69]]))
-            where triangle3 [a, b, c] = triangle a b c
+getTestTriangle = 
+    ("NoTriangle classification:   ", (length $ filter (==NoTriangle) (triangle3 <$> noTrianglePerms)), length noTrianglePerms):
+    ("Equilateral classification:  ", (length $ filter (==Equilateral) (triangle3 <$> equilateralPerms)), length equilateralPerms):
+    ("Rectangular classification:  ", (length $ filter (==Rectangular) (triangle3 <$> rectangularPerms)), length rectangularPerms):
+    ("Isosceles classification:    ", (length $ filter (==Isosceles) (triangle3 <$> isoscelesPerms)), length isoscelesPerms):
+    ("Other classification:        ", (length $ filter (==Other) (triangle3 <$> otherPerms)), length otherPerms):[]
+    where triangle3 [a, b, c] = triangle a b c
+          noTrianglePerms = concat (permutations <$> [[1,1,3], [3,3,8], [42, 42, 96]])
+          equilateralPerms = concat (permutations <$> [[1,1,1], [3,3,3], [42, 42, 42]])
+          rectangularPerms = concat (permutations <$> [[3,4,5], [6,8,10], [10, 24, 26]])
+          isoscelesPerms = concat (permutations <$> [[1,1,2], [3,3,4], [42, 42, 64]])
+          otherPerms = concat (permutations <$> [[1,2,3], [2,3,4], [42, 48, 69]])
 
-{- 
-TODO testreport
--}
+
+testTriangle = (intercalate "\n" [name ++ ": " ++ show res ++ " / " ++ show target ++ " tests succeeded" | (name, res, target) <- getTestTriangle]) ++ "\n"
+{-
+ - in order to test the 'triangle' implementation, we wrote down a number of values for known triangle forms (Equilateral, Isosceles, etc).
+ - We use these known cases to generate permutations. If all permutations result in the same, correct answer then we can say the test case passed.
+ - The permutations test whether the implementation responds correctly to any rotation of a triangle, while the known values check the classification of triangles.
+ - If both these 'parts' of the test pass, we can say that the tested triangles work in any rotation.
+ - We chose for this approach because generating triangles would mean implementing (nearly) the same logic as checking the triangles. This means
+ - that we would be prone to making the same logical errors in the implementation and test.
+ -}
 {- 
  - Exercise 3
  - Time: 15 mins
