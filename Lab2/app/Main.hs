@@ -8,11 +8,11 @@ main = do
     -- printf "== Assignment 1 ==\n"
     -- printf "%s\n" quartileTest
     -- printf "== Assignment 2 ==\n"
-    -- printf "%s\n" testTriangle
+    putStr testTriangle
     -- printf "== Assignment 3 ==\n"
 
     printf "== Assignment 4 ==\n"
-    quickCheck prop_sameListLengthPerm
+    -- quickCheck prop_sameListLengthPerm
     -- quickCheck prop_numOccurencePerm
     --
     -- printf "== Assignment 5 ==\n"

@@ -3,9 +3,9 @@
   size: 1265
   modtime: 1568735018
 /home/mike/master/ssvt/SSVT2019-Group2/Lab2/src/Lab2solutions.hs:
-  hash: fc37b49cbb51fa3356cdffe2abed42da77bac16095c2741f5637f69b764ac8f8
-  size: 18361
-  modtime: 1568751395
+  hash: d2b685d16e8750430a0535a0877cd716e87f9e61aaf99ae23056854f6e656598
+  size: 18928
+  modtime: 1568753046
 /home/mike/master/ssvt/SSVT2019-Group2/Lab2/src/Lab2.hs:
   hash: e4ca1be3f62aa1858f4a68a85646bf24a937ccd04baaf0ed6fc3444fead9ba1c
   size: 431
@@ -25,4 +25,4 @@
 /home/mike/master/ssvt/SSVT2019-Group2/Lab2/solutions-stack.cabal:
   hash: 557ad6ead7336d1be791007aa4085903a90f6f00725d0b277d6ac8bfcd4575ac
   size: 1751
-  modtime: 1568750910
+  modtime: 1568752794
