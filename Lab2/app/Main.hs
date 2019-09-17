@@ -5,9 +5,6 @@ import Test.QuickCheck
 import Data.Char
 
 main = do
-<<<<<<< HEAD
-    printf "hallo"
-=======
     -- printf "== Assignment 1 ==\n"
     -- printf "%s\n" quartileTest
     -- printf "== Assignment 2 ==\n"
@@ -30,4 +27,3 @@ main = do
     --
     printf "== Assignment 7 ==\n"
     putStr testIban
->>>>>>> mike

@@ -32,9 +32,9 @@ chi2p d = snd (head (filter (\(a, _) -> a > d) chi2table))
 
 -- Chi Square test for uniformity on number of Ints returned by quartileTest
 chiSquareTest :: Int -> IO ()
-chiSquareTest n = do 
+chiSquareTest n = do
     chi2 <- (chiSquareUniformStatistic <$> quartileTest n)
-    putStr "Uniform with probability of at least " 
+    putStr "Uniform with probability of at least "
     putStrLn $ showFFloat (Just 2) (chi2p chi2) ""
 
 {- Since we are testing the uniformity of the amount of numbers in each quartile of a random generator,
@@ -411,8 +411,16 @@ ibanIncorrectCheckSumNumbers = [
  -}
 ibanIncorrectFormatNumbers = [drop 2 q | q <- ibanCorrectNumbers]
 
-<<<<<<< HEAD
-{- 
+getTestIban =
+    ("correct iban num:   ", length $ filter (==True) (map iban ibanCorrectNumbers), length ibanCorrectNumbers):
+    ("incorrect length:   ", length $ filter (==False) (map iban ibanIncorrectLengthNumbers), length ibanIncorrectLengthNumbers):
+    ("incorrect country:  ", length $ filter (==False) (map iban ibanIncorrectCountryNumbers), length ibanIncorrectCountryNumbers):
+    ("incorrect checksum: ", length $ filter (==False) (map iban ibanIncorrectCheckSumNumbers), length ibanIncorrectCheckSumNumbers):
+    ("incorrect format:   ", length $ filter (==False) (map iban ibanIncorrectFormatNumbers), length ibanIncorrectFormatNumbers):[]
+
+testIban = (intercalate "\n" [name ++ ": " ++ show res ++ " / " ++ show target ++ " tests succeeded" | (name, res, target) <- getTestIban]) ++ "\n"
+
+{-
  - BONUS:
 
     Euler 182:
@@ -422,7 +430,7 @@ ibanIncorrectFormatNumbers = [drop 2 q | q <- ibanCorrectNumbers]
 
 euler182 :: Integer
 euler182 = sum [e | e <- [0..totient-1], concealedp !! fromIntegral (e `mod` (p-1)) == concealedpmin, concealedq !! fromIntegral (e `mod` (q-1)) == concealedqmin]
-    where 
+    where
           p = 1009
           q = 3643
           n = p * q
@@ -438,7 +446,7 @@ euler182_all_unconcealed p = [ if gcd e (p-1) == 1 then euler182_unconcealed p e
 euler182_unconcealed :: Integer -> Integer -> Integer
 euler182_unconcealed modulo e = fromIntegral $ length $ filter(\ m -> m ^ e `mod` modulo == m) [0..modulo-1]
 
-{- 
+{-
     Euler 97:
     A: 8739992577
 -}
@@ -447,7 +455,7 @@ euler97 :: String
 euler97 = reverse $ take 10 (reverse (show (28433*2^7830457+1)))
 
 
-{- 
+{-
     Euler 92:
     A: 8581146
 -}
@@ -459,13 +467,3 @@ euler92Helper :: Integer -> Bool
 euler92Helper 89 = True
 euler92Helper 1 = False
 euler92Helper x = euler92Helper $ sum [fromIntegral (digitToInt y)^2 | y <- show x]
-=======
-getTestIban =
-    ("correct iban num:   ", length $ filter (==True) (map iban ibanCorrectNumbers), length ibanCorrectNumbers):
-    ("incorrect length:   ", length $ filter (==False) (map iban ibanIncorrectLengthNumbers), length ibanIncorrectLengthNumbers):
-    ("incorrect country:  ", length $ filter (==False) (map iban ibanIncorrectCountryNumbers), length ibanIncorrectCountryNumbers):
-    ("incorrect checksum: ", length $ filter (==False) (map iban ibanIncorrectCheckSumNumbers), length ibanIncorrectCheckSumNumbers):
-    ("incorrect format:   ", length $ filter (==False) (map iban ibanIncorrectFormatNumbers), length ibanIncorrectFormatNumbers):[]
-
-testIban = (intercalate "\n" [name ++ ": " ++ show res ++ " / " ++ show target ++ " tests succeeded" | (name, res, target) <- getTestIban]) ++ "\n"
->>>>>>> mike
