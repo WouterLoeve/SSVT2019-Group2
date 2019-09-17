@@ -25,5 +25,5 @@ main = do
     -- printf "== Assignment 6 ==\n"
     -- testRot13Props
     --
-    -- printf "== Assignment 7 ==\n"
-    -- printf "%s\n" ibanCorrectTests
+    printf "== Assignment 7 ==\n"
+    putStr testIban
