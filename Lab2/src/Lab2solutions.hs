@@ -311,14 +311,19 @@ ibanCorrectTests = (length $ filter (==True) (map iban testData), length testDat
 
 
 {- 
-TESTING
+ - BONUS:
 
+    Euler 182:
+    A: 399788195976
 -}
 
 
-euler182 :: Integer -> Integer -> Integer
-euler182 p q = sum [e | e <- [0..totient-1], concealedp !! fromIntegral (e `mod` (p-1)) == concealedpmin, concealedq !! fromIntegral (e `mod` (q-1)) == concealedqmin]
-    where n = p * q
+euler182 :: Integer
+euler182 = sum [e | e <- [0..totient-1], concealedp !! fromIntegral (e `mod` (p-1)) == concealedpmin, concealedq !! fromIntegral (e `mod` (q-1)) == concealedqmin]
+    where 
+          p = 1009
+          q = 3643
+          n = p * q
           totient = (p-1)*(q-1)
           concealedp = euler182_all_unconcealed p
           concealedq = euler182_all_unconcealed q
@@ -331,16 +336,24 @@ euler182_all_unconcealed p = [ if gcd e (p-1) == 1 then euler182_unconcealed p e
 euler182_unconcealed :: Integer -> Integer -> Integer
 euler182_unconcealed modulo e = fromIntegral $ length $ filter(\ m -> m ^ e `mod` modulo == m) [0..modulo-1]
 
+{- 
+    Euler 97:
+    A: 8739992577
+-}
+
 euler97 :: String
 euler97 = reverse $ take 10 (reverse (show (28433*2^7830457+1)))
 
+
+{- 
+    Euler 92:
+    A: 8581146
+-}
+
+euler92 :: Int
 euler92 = length $ filter (== True) [euler92Helper x | x <- [1..10^7-1]]
 
-
+euler92Helper :: Integer -> Bool
 euler92Helper 89 = True
 euler92Helper 1 = False
 euler92Helper x = euler92Helper $ sum [fromIntegral (digitToInt y)^2 | y <- show x]
-
-    -- do
-    --     num <- sequence [randomRIO (1,10) | x <- [1..100]]
-    --     return $ sum num
