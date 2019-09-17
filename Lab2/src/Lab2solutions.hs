@@ -21,7 +21,7 @@ quartileTest n = quartile <$> probs n
 
 -- Chi Squared testing helper functions --
 chiSquareUniformStatistic :: [Int] -> Double
-chiSquareUniformStatistic bins = sum ((^2) <$> (subtract expected) <$> fromIntegral <$> bins) / expected
+chiSquareUniformStatistic bins = sum ((^2) <$> subtract expected <$> fromIntegral <$> bins) / expected
     where expected = fromIntegral (sum bins) / fromIntegral (length bins)
 
 chi2table :: [(Double, Double)]
@@ -33,9 +33,11 @@ chi2p d = snd (head (filter (\(a, _) -> a > d) chi2table))
 -- Chi Square test for uniformity on number of Ints returned by quartileTest
 chiSquareTest :: Int -> IO ()
 chiSquareTest n = do
-    chi2 <- (chiSquareUniformStatistic <$> quartileTest n)
+    chi2 <- chiSquareUniformStatistic <$> quartileTest n
     putStr "Uniform with probability of at least "
-    putStrLn $ showFFloat (Just 2) (chi2p chi2) ""
+    putStr $ showFFloat (Just 2) (chi2p chi2) ""
+    putStr " for sample size "
+    print n
 
 {- Since we are testing the uniformity of the amount of numbers in each quartile of a random generator,
  -  we can use a Chi Square test to calculate the consistency of the quartile sizes with a uniform distribution.
@@ -126,19 +128,6 @@ sortProperties' range properties = reverse $ fst <$> sortBy (\(_, a) (_, b) -> c
 testSortProperties :: [Int]
 testSortProperties = sortProperties' [-10..10] [property1, property2, property3, property4]
 
-
--- compareProperties :: [a] -> (a -> Property) -> (a -> Property) -> Ordering
--- compareProperties xs p q
---     | stronger xs p q && weaker xs p q = EQ
---     | stronger xs p q = GT
---     | weaker xs p q = LT
---     | otherwise = EQ
-
--- sortProperties :: [a] -> [a -> Property] -> [Int]
--- sortProperties range properties = reverse $ fst <$> sortBy (\(_, a) (_, b) -> compareProperties range a b) (zip [1..] properties)
-
--- TODO fix ^^ and redefine stronger && weaker
-
 {-
 A:
 - property 1
@@ -149,7 +138,7 @@ A:
 
 {-
  - Exercise 4
- - Time: 60 mins
+ - Time: 120 mins
 -}
 
 isPermutation :: Eq a => [a] -> [a] -> Bool
@@ -176,11 +165,11 @@ isPermutation a b = a \\ b == b \\ a
 - Above but vice versa
 -
 -}
-prop_sameListLengthPerm :: Eq a => ([a], [a]) -> Property
-prop_sameListLengthPerm (xs, ys) = isPermutation xs ys ==> length xs == length ys
+prop_sameListLengthPerm :: [Int] -> [Int] -> Bool
+prop_sameListLengthPerm xs ys = isPermutation xs ys --> length xs == length ys
 
-prop_numOccurencePerm :: Eq a => [a] -> [a] -> Property
-prop_numOccurencePerm xs ys = isPermutation xs ys ==> all (==True) [length (findIndices (==x) ys) == length (findIndices (==x) xs) | x <- xs]
+prop_numOccurencePerm :: [Int] -> [Int] -> Bool
+prop_numOccurencePerm xs ys = isPermutation xs ys --> all (==True) [length (findIndices (==x) ys) == length (findIndices (==x) xs) | x <- xs]
 
 {-
     We want to test our properties using quickCheck.
@@ -198,15 +187,8 @@ prop_numOccurencePerm xs ys = isPermutation xs ys ==> all (==True) [length (find
 -}
 
 genSmallRangeListTuple :: Gen ( [Int], [Int])
-genSmallRangeListTuple = liftM2 (,) (listOf (choose (1,3))) (listOf (choose (1,3)))
+genSmallRangeListTuple = liftM2 (,) (listOf (choose (1,2))) (listOf (choose (1,2)))
 
-{-testPermProps :: IO ()
-testPermProps = do
-    verboseCheck (withMaxSuccess 100 $ forAll (resize 5 genSmallRangeListTuple) prop_sameListLengthPerm)
-    verboseCheck (withMaxSuccess 100 $ forAll (resize 5 genSmallRangeListTuple) prop_numOccurencePerm)
-    quickCheck prop_sameListLengthPerm
-    quickCheck prop_numOccurencePerm
--}
 {-
  - Exercise 5
  - Time: 60 mins
@@ -225,32 +207,21 @@ deran n = [x | x <- permutations xs, isDerangement x xs]
     - A derangement is never the same as the orignal list, unless that list is empty
 
 -}
-prop_sameObjectsDeran :: Eq a => [a] -> [a] -> Property
-prop_sameObjectsDeran xs ys = isDerangement xs ys ==> xs \\ ys == ys \\ xs
+prop_sameObjectsDeran :: [Int] -> [Int] -> Bool
+prop_sameObjectsDeran xs ys = isDerangement xs ys --> xs \\ ys == ys \\ xs
 
-prop_sameListLengthDeran :: Eq a => [a] -> [a] -> Property
-prop_sameListLengthDeran xs ys = isDerangement xs ys ==> length xs == length ys
+prop_sameListLengthDeran :: [Int] -> [Int] -> Bool
+prop_sameListLengthDeran xs ys = isDerangement xs ys --> length xs == length ys
 
-prop_numOccurenceDeran :: Eq a => [a] -> [a] -> Property
-prop_numOccurenceDeran xs ys = isDerangement xs ys ==> all (==True) [length (findIndices (==x) ys) == length (findIndices (==x) xs) | x <- xs]
+prop_numOccurenceDeran :: [Int] -> [Int] -> Bool
+prop_numOccurenceDeran xs ys = isDerangement xs ys --> all (==True) [length (findIndices (==x) ys) == length (findIndices (==x) xs) | x <- xs]
 
-prop_samePosDeran :: Eq a => [a] -> [a] -> Property
-prop_samePosDeran xs ys = isDerangement xs ys ==> all (==True) [x /= y | (x, y) <- zip xs ys]
+prop_samePosDeran :: [Int] -> [Int] -> Bool
+prop_samePosDeran xs ys = isDerangement xs ys --> all (==True) [x /= y | (x, y) <- zip xs ys]
 
-prop_unequalDeran :: Eq a => [a] -> [a] -> Property
-prop_unequalDeran xs ys = isDerangement xs ys && not (null xs) ==> xs /= ys
-{-
-TODO TEST USING DERAN GENERATOR????
-AND WITH QUICKCHECK SO CHANGE IT TO PROPERTIES
+prop_unequalDeran :: [Int] -> [Int] -> Bool
+prop_unequalDeran xs ys = isDerangement xs ys && not (null xs) --> xs /= ys
 
-testDeranProps :: IO ()
-testDeranProps = do
-    verboseCheck (withMaxSuccess 100 $ forAll (resize 5 genSmallRangeListTuple) prop_sameObjectsDeran)
-    verboseCheck (withMaxSuccess 100 $ forAll (resize 5 genSmallRangeListTuple) prop_sameListLengthDeran)
-    verboseCheck (withMaxSuccess 100 $ forAll (resize 5 genSmallRangeListTuple) prop_numOccurenceDeran)
-    verboseCheck (withMaxSuccess 100 $ forAll (resize 5 genSmallRangeListTuple) prop_samePosDeran)
-    verboseCheck (withMaxSuccess 100 $ forAll (resize 5 genSmallRangeListTuple) prop_unequalDeran)
--}
 {-
  - Exercise 6
  - Time: 30
@@ -290,9 +261,13 @@ prop_sameCaseRot13 xs = True ==> map toLower (rot13 xs) == rot13 (map toLower xs
 
 testRot13Props :: IO ()
 testRot13Props = do
+    print "test double Rot13 equals input"
     quickCheck prop_doubleRot13
+    print "test upperCase Rot13"
     quickCheck prop_upperCaseRot13
+    print "test same caseRot13"
     quickCheck prop_sameCaseRot13
+    print "test length Rot13"
     quickCheck prop_lengthRot13
 
 {-
