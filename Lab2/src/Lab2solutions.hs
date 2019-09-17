@@ -6,6 +6,7 @@ import Lab2
 import Text.Show.Functions
 import Test.QuickCheck
 import Control.Monad
+import System.Random
 
 {- 
  - Exercise 1
@@ -149,15 +150,11 @@ prop_numOccurencePerm xs ys = isPermutation xs ys --> all (==True) [length (find
     We noticed that the tests then still take an awful long amount of time.
     So what we did is limit the length of the list to 5, so the tests took less time.
     Now we still have a large number of test cases that are discarded but at least it's faster.
-    Not we want to use the perms function to generate permutations.
+    Not we want to use the permutations function to generate permutations.
 -}
 
 genSmallRangeListTuple :: Gen ( [Int], [Int])
 genSmallRangeListTuple = liftM2 (,) (listOf (choose (1,3))) (listOf (choose (1,3)))
-
-
--- genSmallRangeListTuple :: Gen ( [Int], [Int])
--- genSmallRangeListTuple = liftM2 (,) (listOf (choose (1,3))) (listOf (choose (1,3)))
 
 {-testPermProps :: IO ()
 testPermProps = do
@@ -317,3 +314,33 @@ ibanCorrectTests = (length $ filter (==True) (map iban testData), length testDat
 TESTING
 
 -}
+
+
+euler182 :: Integer -> Integer -> Integer
+euler182 p q = sum [e | e <- [0..totient-1], concealedp !! fromIntegral (e `mod` (p-1)) == concealedpmin, concealedq !! fromIntegral (e `mod` (q-1)) == concealedqmin]
+    where n = p * q
+          totient = (p-1)*(q-1)
+          concealedp = euler182_all_unconcealed p
+          concealedq = euler182_all_unconcealed q
+          concealedpmin = minimum concealedp
+          concealedqmin = minimum concealedq
+
+euler182_all_unconcealed :: Integer -> [Integer]
+euler182_all_unconcealed p = [ if gcd e (p-1) == 1 then euler182_unconcealed p e else 10^10 | e <- [0..p-2]]
+
+euler182_unconcealed :: Integer -> Integer -> Integer
+euler182_unconcealed modulo e = fromIntegral $ length $ filter(\ m -> m ^ e `mod` modulo == m) [0..modulo-1]
+
+euler97 :: String
+euler97 = reverse $ take 10 (reverse (show (28433*2^7830457+1)))
+
+euler92 = length $ filter (== True) [euler92Helper x | x <- [1..10^7-1]]
+
+
+euler92Helper 89 = True
+euler92Helper 1 = False
+euler92Helper x = euler92Helper $ sum [fromIntegral (digitToInt y)^2 | y <- show x]
+
+    -- do
+    --     num <- sequence [randomRIO (1,10) | x <- [1..100]]
+    --     return $ sum num
