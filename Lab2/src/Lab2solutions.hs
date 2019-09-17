@@ -183,7 +183,8 @@ prop_numOccurencePerm xs ys = isPermutation xs ys --> all (==True) [length (find
     We noticed that the tests then still take an awful long amount of time.
     So what we did is limit the length of the list to 5, so the tests took less time.
     Now we still have a large number of test cases that are discarded but at least it's faster.
-    Not we want to use the permutations function to generate permutations.
+    Now we want to use the permutations function to generate permutations.
+    However our tests would not run in main so we went to just using quickcheck.
 -}
 
 genSmallRangeListTuple :: Gen ( [Int], [Int])
@@ -192,6 +193,7 @@ genSmallRangeListTuple = liftM2 (,) (listOf (choose (1,2))) (listOf (choose (1,2
 {-
  - Exercise 5
  - Time: 60 mins
+ - Our testing process was the same as permutations
 -}
 isDerangement :: Eq a => [a] -> [a] -> Bool
 isDerangement xs ys = isPermutation xs ys && all (==True) [x /= y | (x, y) <- zip xs ys]
