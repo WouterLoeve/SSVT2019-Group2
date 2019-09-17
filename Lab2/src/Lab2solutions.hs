@@ -6,17 +6,42 @@ import Lab2
 import Text.Show.Functions
 import Test.QuickCheck
 import Control.Monad
+import Numeric
 
 {- 
  - Exercise 1
  - Time: 30 min
- - A: In each quartile there are about 2500 items. Variance report?
 -}
 quartile :: RealFrac a => [a] -> [Int]
-quartile xs = length <$> [[x | x <- xs, x >= low, x < high, x /= 0.0] | (low, high) <- zip [0, 0.25, 0.5, 0.75] [0.25,0.5, 0.75, 1]]
+quartile xs = length <$> [[x | x <- xs, x >= low, x < high, x /= 0.0] | (low, high) <- zip [0, 0.25, 0.5, 0.75] [0.25, 0.5, 0.75, 1]]
 
-quartileTest :: IO [Int]
-quartileTest = quartile <$> probs 10000
+quartileTest :: Int -> IO [Int]
+quartileTest n = quartile <$> probs n
+
+-- Chi Squared testing helper functions --
+chiSquareUniformStatistic :: [Int] -> Double
+chiSquareUniformStatistic bins = sum ((^2) <$> (subtract expected) <$> fromIntegral <$> bins) / expected
+    where expected = fromIntegral (sum bins) / fromIntegral (length bins)
+
+chi2table :: [(Double, Double)]
+chi2table = zip [0.35, 0.58, 1.01, 1.42, 2.37, 3.66, 4.64, 6.25, 7.81, 11.34, 16.27] [0.95, 0.9, 0.8, 0.7, 0.5, 0.30, 0.20, 0.10, 0.05, 0.01, 0.001]
+
+chi2p :: Double -> Double
+chi2p d = snd (head (filter (\(a, _) -> a > d) chi2table))
+
+-- Chi Square test for uniformity on number of Ints returned by quartileTest
+chiSquareTest :: Int -> IO ()
+chiSquareTest n = do 
+    chi2 <- (chiSquareUniformStatistic <$> quartileTest n)
+    putStr "Uniform with probability of at least " 
+    putStrLn $ showFFloat (Just 2) (chi2p chi2) ""
+
+{- Since we are testing the uniformity of the amount of numbers in each quartile of a random generator,
+ -  we can use a Chi Square test to calculate the consistency of the quartile sizes with a uniform distribution.
+ - The above functions calculate the Chi2 statistic assuming a uniform hypothesis and give the highest confirmed
+ -  p-value for that statistic (taken from precalculated tables for degrees of freedom = 3 = n - 1).
+ - The test returns this p-value given a number of samples, leaving the confidence up to the tester.
+ -}
 
 {- 
  - Exercise 2
