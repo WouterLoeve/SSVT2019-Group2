@@ -299,21 +299,86 @@ iban s = ibanCheckCountrySize s && ibanToInteger s `mod` 97 == 1
 
 {- 
  - Testing:
--}
-ibanCorrectTests :: (Int, Int)
-ibanCorrectTests = (length $ filter (==True) (map iban testData), length testData)
-    where testData = ["AX2112345600000785", "AL47212110090000000235698741", "AD1200012030200359100100", "AD1200012030200359100100", "AT611904300234573201", "BY13NBRB3600900000002Z00AB00", "BE68539007547034", "BA391290079401028494", "BG80BNBG96611020345678", "HR1210010051863000160", "CY17002001280000001200527600", "CZ6508000000192000145399", "DK5000400440116243", "EE382200221020145685", "FO2000400440116243", "FI2112345600000785", "FR1420041010050500013M02606", "DE89370400440532013000", "GI75NWBK000000007099453", "GR1601101250000000012300695", "GL2000400440116243", "HU42117730161111101800000000", "IS140159260076545510730339", "IE29AIBK93115212345678", "IT60X0542811101000000123456", "XK051212012345678906", "LV80BANK0000435195001", "LI21088100002324013AA", "LU280019400644750000", "MK07250120000058984", "MT84MALT011000012345MTLCAST001S", "MD24AG000225100013104168", "MC5811222000010123456789030", "ME25505000012345678951", "NL91ABNA0417164300", "NO9386011117947", "PL61109010140000071219812874", "PT50000201231234567890154", "RO49AAAA1B31007593840000", "SM86U0322509800000000270100", "RS35260005601001611379", "SK3112000000198742637541", "ES9121000418450200051332", "SI56191000000123438", "SE4550000000058398257466", "CH9300762011623852957", "GB29NWBK60161331926819", "AZ21NABZ00000000137010001944", "BH67BMAG00001299123456", "BR1800000000141455123924100C2", "VG96VPVG0000012345678901"]
+ - According to the specification found on wikipedia, an IBAN must be validated against:
+ - 1. Its country code
+ - 2. Its number of characters matches the amount specific to it's country code
+ - 3. Its country, bank and account numbers together pass the checksum
+ - It stands to reason that if these three validations together determine the validity of an iban number
+ - AND the testcases cover all three of these validations (false positives, true positives, false negatives, true negatives) THEN
+ - the tests will accuratly determine if the implementation is correct.
+ -
+ - It is possible to automate the test process by creating an IBAN number generator and setting up rules to
+ - generate invalid numbers from the generated correct numbers. The problem with this approach is that a logic error
+ - is likely to be programmed into both the generator and the implementation. Meaning that both will be wrong.
+ -}
 
--- ibanInCorrectLength :: (Int, Int)
--- ibanInCorrectLength = (length $ filter (==True) (map iban testData), length testData)
---     where testData = ["AX2112345600000785", "AL47212110090000000235698741", "AD1200012030200359100100", "AD1200012030200359100100", "AT611904300234573201", "BY13NBRB3600900000002Z00AB00", "BE68539007547034", "BA391290079401028494", "BG80BNBG96611020345678", "HR1210010051863000160", "CY17002001280000001200527600", "CZ6508000000192000145399", "DK5000400440116243", "EE382200221020145685", "FO2000400440116243", "FI2112345600000785", "FR1420041010050500013M02606", "DE89370400440532013000", "GI75NWBK000000007099453", "GR1601101250000000012300695", "GL2000400440116243", "HU42117730161111101800000000", "IS140159260076545510730339", "IE29AIBK93115212345678", "IT60X0542811101000000123456", "XK051212012345678906", "LV80BANK0000435195001", "LI21088100002324013AA", "LU280019400644750000", "MK07250120000058984", "MT84MALT011000012345MTLCAST001S", "MD24AG000225100013104168", "MC5811222000010123456789030", "ME25505000012345678951", "NL91ABNA0417164300", "NO9386011117947", "PL61109010140000071219812874", "PT50000201231234567890154", "RO49AAAA1B31007593840000", "SM86U0322509800000000270100", "RS35260005601001611379", "SK3112000000198742637541", "ES9121000418450200051332", "SI56191000000123438", "SE4550000000058398257466", "CH9300762011623852957", "GB29NWBK60161331926819", "AZ21NABZ00000000137010001944", "BH67BMAG00001299123456", "BR1800000000141455123924100C2", "VG96VPVG0000012345678901"]
+{-
+ - These IBAN numbers have correct countries, correct lengths and correct checksums
+ -}
+ibanCorrectNumbers = ["AX2112345600000785", "AL47212110090000000235698741", 
+                      "AD1200012030200359100100", "AD1200012030200359100100",
+                      "AT611904300234573201", "BY13NBRB3600900000002Z00AB00",
+                      "BE68539007547034", "BA391290079401028494",
+                      "BG80BNBG96611020345678", "HR1210010051863000160", 
+                      "CY17002001280000001200527600", "CZ6508000000192000145399",
+                      "DK5000400440116243", "EE382200221020145685",
+                      "FO2000400440116243", "FI2112345600000785",
+                      "FR1420041010050500013M02606", "DE89370400440532013000",
+                      "GI75NWBK000000007099453", "GR1601101250000000012300695"]
 
+{-
+ - These numbers have correct countries and correct checksums but are of incorrect length (for the country)
+ -}
+ibanIncorrectLengthNumbers = ["NL67SGFW12522315035", "NC643278864647022310269586",
+                              "RO95JLFB955192534163469", "TN56702881394885457943736",
+                              "TR4791165385213582666645727", "PM646660289486264340672969",
+                              "NO55483613737130", "WF647626247814330049391", 
+                              "SM45M48881430363813800185", "TR77585070398853758044433",
+                              "PT818980475695824751698", "RO42QBBEAS5290470985636122",
+                              "MK7933791941111434742", "BG24ZKSVG96204746173581",
+                              "AD841044691482479260335", "AL327516393714198669",
+                              "BE92943937755518104", "IE04DCUZ912344680662",
+                              "LU73488349387786746720", "LU90076389684146586224"]
+{-
+ - These numbers have correct checksums module and randomized length but have nonexistent country codes
+ - We cannot say if the length is correct for these numbers, as the correct length is determined by the country codes.
+ - Please not that numbers of incorrect length and numbers with an incorrect, but existing, country are equivalent
+ - This means we do not have to test existing country codes here, as this is already covered by the checksum and length testcases.
+ -}
+ibanIncorrectCountryNumbers = ["YT7857593898343738050134","UH754026287457332515908629",
+                            "OJ2825631598907543954455939","TY85883613886685236991",
+                            "WS79BWHM5923236481630424","UL841130781673506267",
+                            "MC564645042217944600527","SR8760569866259754070342",
+                            "WE73177662105346668","OR4821184149593475153227",
+                            "HY70YSCK4785470628303544450QCI","NV90JTGL6891646588",
+                            "ZG1270466930361","QW09KNWX4607026329478009",
+                            "SA57300568247820870416084718","ZI8074530020847539853684",
+                            "TE09060291674216030563","MT74790838488868905",
+                            "LP33228562508079741696372450","QE32HTEW28888798280173"]
 
--- ibanIncorrectCountryCode
+{-
+ - These numbers have correct countries and correct lengths but either the checksum digits or
+ - some of the other digits have been altered to invalidate the checksum.
+ -}
+ibanIncorrectCheckSumNumbers = [
+                            "AT410027858685672522","AZ37ZFLG03307267335593333507",
+                            "BA300197128562411950","CR89848952804072984993",
+                            "CY44141061438424400018793246","CZ3176878788108691183262",
+                            "GR0533008200183754341530620","GT67610136062667276737345240",
+                            "HR1613544633173410812","IT78T2502733069641192166850",
+                            "LI2843121170467499758","LT941866191732070676",
+                            "MD4006990560002625979136","ME19543469959297860214",
+                            "ST07391604163242112922096","SV82HYHJ67793753610470557999",
+                            "VA59458809695816824486","VG910OIF5082787325276113",
+                            "SK2271568340888601191242","SM2003047677027132015246541"]
+{-
+ - These numbers are derived from correct iban numbers, but are missing the country code and are therefore of incorrect formatting.w
+ -}
+ibanIncorrectFormatNumbers = [drop 2 q | q <- ibanCorrectNumbers]
 
-
-
-{- 
-TESTING
-
--}
+testIban = 
+    (all (==True) [iban s | s <- ibanCorrectNumbers]) &&
+    (all (==False) [iban s | s <- ibanIncorrectLengthNumbers]) &&
+    (all (==False) [iban s | s <- ibanIncorrectCountryNumbers]) &&
+    (all (==False) [iban s | s <- ibanIncorrectCheckSumNumbers]) &&
+    (all (==False) [iban s | s <- ibanIncorrectFormatNumbers])
