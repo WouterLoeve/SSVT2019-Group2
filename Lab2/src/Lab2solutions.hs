@@ -80,8 +80,13 @@ getTestTriangle =
 
 testTriangle = (intercalate "\n" [name ++ ": " ++ show res ++ " / " ++ show target ++ " tests succeeded" | (name, res, target) <- getTestTriangle]) ++ "\n"
 {-
-TODO testreport
--}
+ - in order to test the 'triangle' implementation, we wrote down a number of values for known triangle forms (Equilateral, Isosceles, etc).
+ - We use these known cases to generate permutations. If all permutations result in the same, correct answer then we can say the test case passed.
+ - The permutations test whether the implementation responds correctly to any rotation of a triangle, while the known values check the classification of triangles.
+ - If both these 'parts' of the test pass, we can say that the tested triangles work in any rotation.
+ - We chose for this approach because generating triangles would mean implementing (nearly) the same logic as checking the triangles. This means
+ - that we would be prone to making the same logical errors in the implementation and test.
+ -}
 {-
  - Exercise 3
  - Time: 15 mins
