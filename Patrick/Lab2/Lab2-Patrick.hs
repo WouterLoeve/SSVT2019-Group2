@@ -22,40 +22,32 @@ countQuartiles n = do
       (getQuartile y 0.5 0.75):
       (getQuartile y 0.75 1.0):[])
 
+-- The quartiles roughly follow the expected distribution of [2500, 2500, 2500, 2500]
+
 -- Excercise 2: recognizing Triangles, time spent: 1.5 hour
-{-
 findTriangle :: Integer -> Integer -> Integer -> Shape
-findTriangle a b c =
-    if (c >= (a+b)) then NoTriangle else
-        if ((a==b) && (b==c)) then Equilateral else
-            if (a^2 + b^2 == c^2) then Rectangular else
-                if (a==b) || (a==c) || (b==c) then Isosceles else
-                    Other
--}
-
-
-
-findTriangle' :: Integer -> Integer -> Integer -> Shape
-findTriangle' a b c | (c >= (a+b)) = NoTriangle
-                    | ((a==b) && (b==c)) = Equilateral
-                    | (a^2 + b^2 == c^2) = Rectangular
-                    | ((a==b)||(a==c)||(b==c)) = Isosceles
-findTriangle' _ _ _ = Other
-
+findTriangle a b c | (c >= (a+b)) = NoTriangle
+                   | ((a==b) && (b==c)) = Equilateral
+                   | (a^2 + b^2 == c^2) = Rectangular
+                   | ((a==b)||(a==c)||(b==c)) = Isosceles
+findTriangle _ _ _ = Other
 
 -- Make param C the largest
 triangle :: Integer -> Integer -> Integer -> Shape
-triangle x y z | (z >= x) && (z >= y) = findTriangle' x y z
-               | (y >= x) && (y >= z) = findTriangle' x z y
-               | (x >= y) && (x >= z) = findTriangle' y z x
+triangle x y z | (z >= x) && (z >= y) = findTriangle x y z
+               | (y >= x) && (y >= z) = findTriangle x z y
+               | (x >= y) && (x >= z) = findTriangle y z x
 
+-- helper function that accepts list instead of params
 triangle' :: [Integer] -> Shape
 triangle' [x,y,z] = triangle x y z
 
+-- helper function that tests all permutations of a list of parameters against expected output
 testTriangleHelper l e =
    let p = permutations l in
       all (==True) [(triangle' i) == e | i <- p]
     
+-- test function that tests permutations of known results
 testTriangle=
    (testTriangleHelper [2,2,2] Equilateral) &&
    (testTriangleHelper [5,12,13] Rectangular) &&
@@ -84,12 +76,14 @@ prop1 x = (even x && x > 3)
 prop2 x = (even x || x > 3)
 prop3And4 x = ((even x && x > 3) || even x)
 
-{-STRONGEST
-prop1
-propEven
-prop3And4
-prop2
-WEAKEST-}
+{-
+ - ==STRONGEST==
+ - prop1
+ - propEven
+ - prop3And4
+ - prop2
+ - ==WEAKEST==
+ -}
 
 -- Excercise 4: Recognizing Permutations, time spent: 30 mins
 isPermutation :: Eq a => [a] -> [a] -> Bool
@@ -97,10 +91,24 @@ isPermutation a b = null (a \\ b) && null (b \\ a)
 -- explanation: use list difference operator to find items only occuring in a or only in b.
 -- If there are no items that are only in a or only in b then the list contain the same elements.
 
--- Properties
+-- Requirements
 -- 1. length a & b must be the same
 -- 2. The types must derive Eq
 -- It is assumed that lists in Haskell can only contain a single type
+
+-- Properties of permutations
+-- 1. list a and permutation b have the same length
+-- 2. list a and permutation b have the same amount of each element (e.g. two occurences of 5 in each)
+
+count :: Eq a => a -> [a] -> Int
+count x = length . filter (x==)
+
+blend (x:xs) ys = x:(blend ys xs)
+blend _ _ = []
+
+prop_permutationLength a b = length a == length b
+prop_permutationElements a b = all (==True) [count x a == count x b | x <- blend a b]
+
 
 testIsPermutation =
     (isPermutation [1,2,3] [2,1,3]) &&
@@ -123,7 +131,6 @@ deran n = let source = [0..(n-1)]
 -- 1. list must be equal length
 -- 2. lists must be permutations of eachother
 -- The properties can be ranked as follows:
---
 listLength x y = length x == length y
 curryPermutation n = isPermutation [1,2,3,4] n
 curryLength n = listLength [1,2,3,4] n
@@ -137,11 +144,22 @@ curryLength n = listLength [1,2,3,4] n
 -- Specification
 -- ROT13 maps an input character in the range [A..Z]++[a..z] to 
 -- an output character in the range [N..Z]++[A..M]++[n..z]++[a..m]
--- It is not specified what should happen to an input character outside of the range [A..Z]++[a..z]
+-- an input character outside of this range will remain the same.
 rot13' s | s `elem` (['A'..'M']++['a'..'m']) = chr (ord s + 13)
-        | s `elem` (['N'..'Z']++['n'..'z']) = chr (ord s - 13)
-        | otherwise = ' '
+         | s `elem` (['N'..'Z']++['n'..'z']) = chr (ord s - 13)
+         | otherwise = s
 rot13 s = [rot13' c | c <- s]
+
+{-
+ - Properties:
+ - 1. Rot13 is it's own inverse. Running rot13 twice returns the original string.
+ - 2. The string length of input and rot13-encoded output is the same
+ - 3. Rot13 preserves uppercase during encoding.
+ -}
+prop_rot13Inverse s = rot13 (rot13 s) == s
+prop_rot13Length s = length s == length (rot13 s)
+prop_rot13Upper s = all (==True) [isUpper c == isUpper (rot13' c) | c <- s]
+
 
 
 -- Excercise 7: implementing IBAN, time spent: 1 hour
