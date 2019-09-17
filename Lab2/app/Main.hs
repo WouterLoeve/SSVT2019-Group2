@@ -5,4 +5,4 @@ import Test.QuickCheck
 import Data.Char
 
 main = do
-    printf ""
+    printf "hallo"
