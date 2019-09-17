@@ -7,7 +7,7 @@ import Text.Show.Functions
 import Test.QuickCheck
 import Control.Monad
 
-{- 
+{-
  - Exercise 1
  - Time: 30 min
  - A: In each quartile there are about 2500 items. Variance report?
@@ -18,9 +18,16 @@ quartile xs = length <$> [[x | x <- xs, x >= low, x < high, x /= 0.0] | (low, hi
 quartileTest :: IO [Int]
 quartileTest = quartile <$> probs 10000
 
-{- 
+{-
  - Exercise 2
  - Time: 60 mins
+ First, we implement the properties of a triangle which can be one of the
+ following: NoTriangle, Equilateral, Rectangular, Isosceles or Other which means
+ its a triangle without any of the three properties. Starting by sorting the
+ given triple of integer values, we can work easier with the fact that we will
+ know which of the variables represents the longest side of the triangle.
+
+ After implementing these triangle properties, we implement some tests for each property.
 -}
 triangle :: Integer -> Integer -> Integer -> Shape
 triangle a b c
@@ -39,10 +46,10 @@ testTriangle = all (== NoTriangle) (triangle3 <$> concat (permutations <$> [[1,1
             && all (== Other) (triangle3 <$> concat (permutations <$> [[1,2,3], [2,3,4], [42, 48, 69]]))
             where triangle3 [a, b, c] = triangle a b c
 
-{- 
+{-
 TODO testreport
 -}
-{- 
+{-
  - Exercise 3
  - Time: 15 mins
 -}
@@ -52,7 +59,7 @@ forall = flip all
 
 stronger, weaker :: [a] -> (a -> Bool) -> (a -> Bool) -> Bool
 stronger xs p q = forall xs (\ x -> p x --> q x)
-weaker   xs p q = stronger xs q p 
+weaker   xs p q = stronger xs q p
 
 property1, property2, property3, property4 :: Int -> Bool
 property1 x = even x && x > 3
@@ -61,7 +68,7 @@ property3 x = (even x && x > 3) || even x
 property4 = even
 
 {-
-    When comparing the properties we give two functions, one specialised for 
+    When comparing the properties we give two functions, one specialised for
         this exercise since the exercise expects us to use the type signature (Int -> Bool) (denoted with sortProperties')
     We also introduce a generic version for later exercises.
 
@@ -80,7 +87,7 @@ sortProperties' range properties = reverse $ fst <$> sortBy (\(_, a) (_, b) -> c
 
 testSortProperties :: [Int]
 testSortProperties = sortProperties' [-10..10] [property1, property2, property3, property4]
-    
+
 
 -- compareProperties :: [a] -> (a -> Property) -> (a -> Property) -> Ordering
 -- compareProperties xs p q
@@ -91,35 +98,35 @@ testSortProperties = sortProperties' [-10..10] [property1, property2, property3,
 
 -- sortProperties :: [a] -> [a -> Property] -> [Int]
 -- sortProperties range properties = reverse $ fst <$> sortBy (\(_, a) (_, b) -> compareProperties range a b) (zip [1..] properties)
-    
+
 -- TODO fix ^^ and redefine stronger && weaker
 
 {-
-A: 
+A:
 - property 1
 - property 3 and 4 (are equal)
 - property 2
 -}
 
 
-{- 
+{-
  - Exercise 4
  - Time: 60 mins
 -}
 
 isPermutation :: Eq a => [a] -> [a] -> Bool
 isPermutation a b = a \\ b == b \\ a
-{- 
+{-
  - Explanation: using the list difference operator we can find the items only occuring in a or only in b.
  - If there are no items that are only in a and only in b then the list contain the same elements, and are thus permutations of eachother
  - This implementation is duplicate aware, meaning that a list with one or more duplicates can never be a permutation of a list without duplicates.
  -}
 
-{- 
-- Assuming that the input list cannot contain duplicates makes your 
--  precondition stricter than not assuming this. 
+{-
+- Assuming that the input list cannot contain duplicates makes your
+-  precondition stricter than not assuming this.
 - Preconditions can be made stricter without affecting the properties of the function.
-- So if you would assume no duplicates (and reflect it in the precondition) 
+- So if you would assume no duplicates (and reflect it in the precondition)
   the function's properties should still hold.
 -}
 
@@ -129,22 +136,22 @@ isPermutation a b = a \\ b == b \\ a
 - Length of the list must be the same
 - Number of times an object is present in one list is the same as the number of times it is present in the other list
 - Above but vice versa
-- 
+-
 -}
 prop_sameListLengthPerm :: Eq a => ([a], [a]) -> Property
 prop_sameListLengthPerm (xs, ys) = isPermutation xs ys ==> length xs == length ys
 
-prop_numOccurencePerm :: Eq a => [a] -> [a] -> Bool
-prop_numOccurencePerm xs ys = isPermutation xs ys --> all (==True) [length (findIndices (==x) ys) == length (findIndices (==x) xs) | x <- xs]
+prop_numOccurencePerm :: Eq a => [a] -> [a] -> Property
+prop_numOccurencePerm xs ys = isPermutation xs ys ==> all (==True) [length (findIndices (==x) ys) == length (findIndices (==x) xs) | x <- xs]
 
 {-
     We want to test our properties using quickCheck.
-    If we just run the normal quickcheck (quickCheck <propertyfunction>) 
+    If we just run the normal quickcheck (quickCheck <propertyfunction>)
         The number of testcases relevant to our function is limited.
-    This is why instead of the --> operator we use the ==> which acts as a 
+    This is why instead of the --> operator we use the ==> which acts as a
         precondition for our propertytester. This way we only test actual permutations for this property.
     But now we discard most of our testcases because most generated lists are not actually permutations.
-    This is why wrote our own generator which generates a tuple of the a fewer amount of integers so the 
+    This is why wrote our own generator which generates a tuple of the a fewer amount of integers so the
         chance of having a permutation is higher.
     We noticed that the tests then still take an awful long amount of time.
     So what we did is limit the length of the list to 5, so the tests took less time.
@@ -166,7 +173,7 @@ testPermProps = do
     quickCheck prop_sameListLengthPerm
     quickCheck prop_numOccurencePerm
 -}
-{- 
+{-
  - Exercise 5
  - Time: 60 mins
 -}
@@ -179,25 +186,25 @@ deran n = [x | x <- permutations xs, isDerangement x xs]
 {-
  - A derangement is a stronger property than permutation since it is a special case of the permutation.
  - That means the same properties of permutation also hold.
- - Additionally 
+ - Additionally
     - there is also the property of a derangement that an element doesn't occur on the same position
     - A derangement is never the same as the orignal list, unless that list is empty
- 
+
 -}
-prop_sameObjectsDeran :: Eq a => [a] -> [a] -> Bool
-prop_sameObjectsDeran xs ys = isDerangement xs ys --> xs \\ ys == ys \\ xs
+prop_sameObjectsDeran :: Eq a => [a] -> [a] -> Property
+prop_sameObjectsDeran xs ys = isDerangement xs ys ==> xs \\ ys == ys \\ xs
 
-prop_sameListLengthDeran :: Eq a => [a] -> [a] -> Bool
-prop_sameListLengthDeran xs ys = isDerangement xs ys --> length xs == length ys
+prop_sameListLengthDeran :: Eq a => [a] -> [a] -> Property
+prop_sameListLengthDeran xs ys = isDerangement xs ys ==> length xs == length ys
 
-prop_numOccurenceDeran :: Eq a => [a] -> [a] -> Bool
-prop_numOccurenceDeran xs ys = isDerangement xs ys --> all (==True) [length (findIndices (==x) ys) == length (findIndices (==x) xs) | x <- xs]
+prop_numOccurenceDeran :: Eq a => [a] -> [a] -> Property
+prop_numOccurenceDeran xs ys = isDerangement xs ys ==> all (==True) [length (findIndices (==x) ys) == length (findIndices (==x) xs) | x <- xs]
 
-prop_samePosDeran :: Eq a => [a] -> [a] -> Bool
-prop_samePosDeran xs ys = isDerangement xs ys --> all (==True) [x /= y | (x, y) <- zip xs ys]
+prop_samePosDeran :: Eq a => [a] -> [a] -> Property
+prop_samePosDeran xs ys = isDerangement xs ys ==> all (==True) [x /= y | (x, y) <- zip xs ys]
 
-prop_unequalDeran :: Eq a => [a] -> [a] -> Bool
-prop_unequalDeran xs ys = isDerangement xs ys && not (null xs) --> xs /= ys
+prop_unequalDeran :: Eq a => [a] -> [a] -> Property
+prop_unequalDeran xs ys = isDerangement xs ys && not (null xs) ==> xs /= ys
 {-
 TODO TEST USING DERAN GENERATOR????
 AND WITH QUICKCHECK SO CHANGE IT TO PROPERTIES
@@ -210,12 +217,12 @@ testDeranProps = do
     verboseCheck (withMaxSuccess 100 $ forAll (resize 5 genSmallRangeListTuple) prop_samePosDeran)
     verboseCheck (withMaxSuccess 100 $ forAll (resize 5 genSmallRangeListTuple) prop_unequalDeran)
 -}
-{- 
+{-
  - Exercise 6
  - Time: 30
  - A:
  - Rot 13 is a monoalphabetic substitution cipher.
- - This replaces a letter by the letter 13 steps in the alphabet beyond that letter. 
+ - This replaces a letter by the letter 13 steps in the alphabet beyond that letter.
  - To take a few examples, the letter A becomes the letter N, B becomes O. a becomes n and b becomes o.
  - Encrypting and Decrypting is the same operation since the alphabet has 26 characters.
 -}
@@ -224,7 +231,7 @@ rot13 :: String -> String
 rot13 s = rot13Single <$> s
 
 rot13Single :: Char -> Char
-rot13Single s 
+rot13Single s
     | s `elem` (['A'..'M']++['a'..'m']) = chr (ord s + 13)
     | s `elem` (['N'..'Z']++['n'..'z']) = chr (ord s - 13)
     | otherwise = s
@@ -235,19 +242,17 @@ rot13Single s
     Converting the string to lowercase before rot13 and after rot13 have the same result (associative)
         (e.g. toLower rot13(Z) == rot13(z))
 -}
-prop_doubleRot13 :: String -> Bool
-prop_doubleRot13 xs = rot13 (rot13 xs) == xs
+prop_doubleRot13 :: String -> Property
+prop_doubleRot13 xs = True ==> rot13 (rot13 xs) == xs
 
-prop_upperCaseRot13 :: String -> Bool
-prop_upperCaseRot13 xs = map isUpper (rot13 xs) == map isUpper xs
+prop_upperCaseRot13 :: String -> Property
+prop_upperCaseRot13 xs = True ==> map isUpper (rot13 xs) == map isUpper xs
 
-prop_lengthRot13 :: String -> Bool
-prop_lengthRot13 xs = length xs == length (rot13 xs)
+prop_lengthRot13 :: String -> Property
+prop_lengthRot13 xs = True ==> length xs == length (rot13 xs)
 
-prop_sameCaseRot13 :: String -> Bool
-prop_sameCaseRot13 xs = map toLower (rot13 xs) == rot13 (map toLower xs)
-
--- TODO CONVERT TO PROPERTIES!
+prop_sameCaseRot13 :: String -> Property
+prop_sameCaseRot13 xs = True ==> map toLower (rot13 xs) == rot13 (map toLower xs)
 
 testRot13Props :: IO ()
 testRot13Props = do
@@ -256,12 +261,12 @@ testRot13Props = do
     quickCheck prop_sameCaseRot13
     quickCheck prop_lengthRot13
 
-{- 
+{-
  - Exercise 7
  - Time: 120 min
 -}
 ibanChrToNums :: Char -> String
-ibanChrToNums c 
+ibanChrToNums c
     | isAlpha c = show $ ord c - ord 'A' + 10
     | isNumber c = [c]
 
@@ -274,16 +279,16 @@ ibanMoveCharacters s = drop 4 s ++ take 4 s
 ibanToInteger :: String -> Integer
 ibanToInteger = read . ibanReplaceLetters . ibanMoveCharacters
 
-countryCodes = ["AX", "AL", "AD", "AT", "AZ", "BH", "BY", "BE", "BA", "BR", "BG", 
-                "CR", "HR", "CY", "CZ", "DK", "DO", "SV", "EE", "FO", "FI", "FR", 
-                "GE", "DE", "GI", "GR", "GL", "GT", "VA", "HU", "IS", "IQ", "IE", 
-                "IL", "IT", "JO", "KZ", "XK", "KW", "LV", "LB", "LI", "LT", "LU", 
-                "MT", "MR", "MU", "MD", "MC", "ME", "NL", "MK", "NO", "PK", "PS", 
-                "PL", "PT", "QA", "RO", "LC", "SM", "ST", "SA", "RS", "SC", "SK", 
+countryCodes = ["AX", "AL", "AD", "AT", "AZ", "BH", "BY", "BE", "BA", "BR", "BG",
+                "CR", "HR", "CY", "CZ", "DK", "DO", "SV", "EE", "FO", "FI", "FR",
+                "GE", "DE", "GI", "GR", "GL", "GT", "VA", "HU", "IS", "IQ", "IE",
+                "IL", "IT", "JO", "KZ", "XK", "KW", "LV", "LB", "LI", "LT", "LU",
+                "MT", "MR", "MU", "MD", "MC", "ME", "NL", "MK", "NO", "PK", "PS",
+                "PL", "PT", "QA", "RO", "LC", "SM", "ST", "SA", "RS", "SC", "SK",
                 "SI", "ES", "SE", "CH", "TL", "TN", "TR", "UA", "AE", "GB", "VG"]
 
-countryLength = [18, 28, 24, 20, 28, 22, 28, 16, 20, 29, 22, 22, 21, 28, 24, 18, 
-                 28, 28, 20, 18, 18, 27, 22, 22, 23, 27, 18, 28, 22, 28, 26, 23, 
+countryLength = [18, 28, 24, 20, 28, 22, 28, 16, 20, 29, 22, 22, 21, 28, 24, 18,
+                 28, 28, 20, 18, 18, 27, 22, 22, 23, 27, 18, 28, 22, 28, 26, 23,
                  22, 23, 27, 30, 20, 20, 30, 21, 28, 21, 20, 20, 31, 27, 30, 24,
                  27, 22, 18, 19, 15, 24, 29, 28, 25, 29, 24, 32, 27, 25, 24, 22,
                  31, 24, 19, 24, 24, 21, 23, 24, 26, 29, 23, 22, 24]
@@ -297,7 +302,7 @@ ibanCheckCountrySize s = maybe False (length s ==) (getCountryLength (take 2 s))
 iban :: String -> Bool
 iban s = ibanCheckCountrySize s && ibanToInteger s `mod` 97 == 1
 
-{- 
+{-
  - Testing:
 -}
 ibanCorrectTests :: (Int, Int)
@@ -313,7 +318,7 @@ ibanCorrectTests = (length $ filter (==True) (map iban testData), length testDat
 
 
 
-{- 
+{-
 TESTING
 
 -}

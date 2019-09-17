@@ -33,17 +33,6 @@
   (major1) == 4 && (major2) == 12 && (minor) <= 0)
 #endif /* MIN_VERSION_base */
 
-/* package json-0.9.3 */
-#ifndef VERSION_json
-#define VERSION_json "0.9.3"
-#endif /* VERSION_json */
-#ifndef MIN_VERSION_json
-#define MIN_VERSION_json(major1,major2,minor) (\
-  (major1) <  0 || \
-  (major1) == 0 && (major2) <  9 || \
-  (major1) == 0 && (major2) == 9 && (minor) <= 3)
-#endif /* MIN_VERSION_json */
-
 /* package random-1.1 */
 #ifndef VERSION_random
 #define VERSION_random "1.1"
@@ -54,6 +43,17 @@
   (major1) == 1 && (major2) <  1 || \
   (major1) == 1 && (major2) == 1 && (minor) <= 0)
 #endif /* MIN_VERSION_random */
+
+/* tool alex-3.2.3 */
+#ifndef TOOL_VERSION_alex
+#define TOOL_VERSION_alex "3.2.3"
+#endif /* TOOL_VERSION_alex */
+#ifndef MIN_TOOL_VERSION_alex
+#define MIN_TOOL_VERSION_alex(major1,major2,minor) (\
+  (major1) <  3 || \
+  (major1) == 3 && (major2) <  2 || \
+  (major1) == 3 && (major2) == 2 && (minor) <= 3)
+#endif /* MIN_TOOL_VERSION_alex */
 
 /* tool gcc-7 */
 #ifndef TOOL_VERSION_gcc
@@ -99,6 +99,17 @@
   (major1) == 2 && (major2) == 22 && (minor) <= 0)
 #endif /* MIN_TOOL_VERSION_haddock */
 
+/* tool happy-1.19.8 */
+#ifndef TOOL_VERSION_happy
+#define TOOL_VERSION_happy "1.19.8"
+#endif /* TOOL_VERSION_happy */
+#ifndef MIN_TOOL_VERSION_happy
+#define MIN_TOOL_VERSION_happy(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  19 || \
+  (major1) == 1 && (major2) == 19 && (minor) <= 8)
+#endif /* MIN_TOOL_VERSION_happy */
+
 /* tool hpc-0.67 */
 #ifndef TOOL_VERSION_hpc
 #define TOOL_VERSION_hpc "0.67"
@@ -120,6 +131,17 @@
   (major1) == 0 && (major2) <  68 || \
   (major1) == 0 && (major2) == 68 && (minor) <= 5)
 #endif /* MIN_TOOL_VERSION_hsc2hs */
+
+/* tool hscolour-1.24 */
+#ifndef TOOL_VERSION_hscolour
+#define TOOL_VERSION_hscolour "1.24"
+#endif /* TOOL_VERSION_hscolour */
+#ifndef MIN_TOOL_VERSION_hscolour
+#define MIN_TOOL_VERSION_hscolour(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  24 || \
+  (major1) == 1 && (major2) == 24 && (minor) <= 0)
+#endif /* MIN_TOOL_VERSION_hscolour */
 
 /* tool pkg-config-0.29.1 */
 #ifndef TOOL_VERSION_pkg_config
@@ -155,10 +177,10 @@
 #endif /* MIN_TOOL_VERSION_strip */
 
 #ifndef CURRENT_PACKAGE_KEY
-#define CURRENT_PACKAGE_KEY "solutions-stack-0.1.0.0-7JG6Q58irOz81kbKBa10t4"
+#define CURRENT_PACKAGE_KEY "solutions-stack-0.1.0.0-8Lme4NpTMUv9u3BNgP0hkN"
 #endif /* CURRENT_PACKAGE_KEY */
 #ifndef CURRENT_COMPONENT_ID
-#define CURRENT_COMPONENT_ID "solutions-stack-0.1.0.0-7JG6Q58irOz81kbKBa10t4"
+#define CURRENT_COMPONENT_ID "solutions-stack-0.1.0.0-8Lme4NpTMUv9u3BNgP0hkN"
 #endif /* CURRENT_COMPONENT_ID */
 #ifndef CURRENT_PACKAGE_VERSION
 #define CURRENT_PACKAGE_VERSION "0.1.0.0"
