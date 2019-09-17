@@ -284,7 +284,8 @@ testRot13Props = do
 {- 
  - Exercise 7
  - Time: 120 min
--}
+ - Check IBAN numbers by checking the checksum and verifying the length with the country code.
+ -}
 ibanChrToNums :: Char -> String
 ibanChrToNums c 
     | isAlpha c = show $ ord c - ord 'A' + 10
