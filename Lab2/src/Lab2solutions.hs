@@ -376,9 +376,11 @@ ibanIncorrectCheckSumNumbers = [
  -}
 ibanIncorrectFormatNumbers = [drop 2 q | q <- ibanCorrectNumbers]
 
-testIban = 
-    (all (==True) [iban s | s <- ibanCorrectNumbers]) &&
-    (all (==False) [iban s | s <- ibanIncorrectLengthNumbers]) &&
-    (all (==False) [iban s | s <- ibanIncorrectCountryNumbers]) &&
-    (all (==False) [iban s | s <- ibanIncorrectCheckSumNumbers]) &&
-    (all (==False) [iban s | s <- ibanIncorrectFormatNumbers])
+getTestIban = 
+    ("correct iban num:   ", length $ filter (==True) (map iban ibanCorrectNumbers), length ibanCorrectNumbers):
+    ("incorrect length:   ", length $ filter (==False) (map iban ibanIncorrectLengthNumbers), length ibanIncorrectLengthNumbers):
+    ("incorrect country:  ", length $ filter (==False) (map iban ibanIncorrectCountryNumbers), length ibanIncorrectCountryNumbers):
+    ("incorrect checksum: ", length $ filter (==False) (map iban ibanIncorrectCheckSumNumbers), length ibanIncorrectCheckSumNumbers):
+    ("incorrect format:   ", length $ filter (==False) (map iban ibanIncorrectFormatNumbers), length ibanIncorrectFormatNumbers):[]
+
+testIban = (intercalate "\n" [name ++ ": " ++ show res ++ " / " ++ show target ++ " tests succeeded" | (name, res, target) <- getTestIban]) ++ "\n"
