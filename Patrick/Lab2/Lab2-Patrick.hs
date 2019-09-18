@@ -88,8 +88,9 @@ prop3And4 x = ((even x && x > 3) || even x)
 -- Excercise 4: Recognizing Permutations, time spent: 30 mins
 isPermutation :: Eq a => [a] -> [a] -> Bool
 isPermutation a b = null (a \\ b) && null (b \\ a)
--- explanation: use list difference operator to find items only occuring in a or only in b.
--- If there are no items that are only in a or only in b then the list contain the same elements.
+-- explanation: using the list difference operator we can find the items only occuring in a or only in b.
+-- If there are no items that are only in a or only in b then the list contain the same elements, and are thus permutations of eachother
+-- This implementaiton is duplicate aware, meaning that a list with one or more duplicates can never be a permutation of a list without duplicates.
 
 -- Requirements
 -- 1. length a & b must be the same

@@ -134,4 +134,4 @@ ibanCheckCountrySize :: String -> Bool
 ibanCheckCountrySize s = maybe False (length s ==) (getCountryLength (take 2 s))
 
 iban :: String -> Bool
-iban s = ibanCheckCountrySize s && ibanToInteger s `mod` 79 == 1
+iban s = ibanCheckCountrySize s && ibanToInteger s `mod` 97 == 1
