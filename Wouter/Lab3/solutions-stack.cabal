@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cb3b4677d9726f9f1b904415fc6c66b5fca925da803ef1d0c8e52074e0e16a59
+-- hash: eae345f06dff5e03d42c97a9b7337a5849a736b3d8c10f33d96c72ddce5b2b04
 
 name:           solutions-stack
 version:        0.1.0.0
@@ -30,6 +30,7 @@ library
       Lab1
       Lab2
       Lab3solutions
+      Lecture3
       SetOrd
   other-modules:
       Paths_solutions_stack
