@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: eae345f06dff5e03d42c97a9b7337a5849a736b3d8c10f33d96c72ddce5b2b04
+-- hash: 78ebc7d804dbf1c86c32c5169f10c5d7a19f342267b8334729868a0180d18d03
 
 name:           solutions-stack
 version:        0.1.0.0
@@ -40,6 +40,7 @@ library
       QuickCheck >=2.13.2 && <3
     , base >=4.7 && <5
     , random
+    , text
   default-language: Haskell2010
 
 executable solutions-stack-exe
@@ -54,6 +55,7 @@ executable solutions-stack-exe
     , base >=4.7 && <5
     , random
     , solutions-stack
+    , text
   default-language: Haskell2010
 
 test-suite solutions-stack-test
@@ -69,4 +71,5 @@ test-suite solutions-stack-test
     , base >=4.7 && <5
     , random
     , solutions-stack
+    , text
   default-language: Haskell2010

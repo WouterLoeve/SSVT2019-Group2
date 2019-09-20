@@ -2,6 +2,7 @@ module Lab3solutions where
 import Data.List
 import Data.Char
 import Data.Tuple
+import qualified Data.Text as T
 import Text.Show.Functions
 import Test.QuickCheck
 import Control.Monad
@@ -14,7 +15,7 @@ import Lecture3
  - A: 
 -}
 getTruthTable :: Form -> [Bool]
-getTruthTable f = map (\ v -> evl v f) (allVals f)
+getTruthTable f = map (`evl` f) (allVals f)
 
 contradiction :: Form -> Bool
 contradiction f = all (==False) (getTruthTable f)
@@ -33,14 +34,54 @@ equiv f1 f2 = entails f1 f2 && entails f2 f1
 
 {- 
  - Exercise 2
- - Time:  min
+ - Time: 10 min
  - Options:
     - use Format's to convert to String with Show, Parse them and use equiv.
     - make seperate Format's and String notations and then use equiv
     - Same as the above but then compare strings
     - Instead of equiv check if contradiction, entails and tautology yield the same results
 -}
+showParse :: Form -> Form
+showParse f = head $ parse $ show f
 
+prop_equivParse :: Form -> Property
+prop_equivParse f = True ==> equiv (showParse f) f
+
+prop_tautParse :: Form -> Property
+prop_tautParse f = True ==> tautology f == tautology (showParse f)
+
+prop_contraParse :: Form -> Property
+prop_contraParse f = True ==> contradiction f == contradiction (showParse f)
+
+prop_rEntailsParse :: Form -> Property
+prop_rEntailsParse f = True ==> f `entails` showParse f
+
+prop_lEntailsParse :: Form -> Property
+prop_lEntailsParse f = True ==> showParse f `entails` f
+
+-- Not sure about this one??????
+prop_testShow :: Form -> Property
+prop_testShow f = True ==> show (showParse f) == show f
+
+-- More testing methods???
+-- Unit tests?
+
+testParse :: IO ()
+testParse = do
+    print "Testing equivalence between parsed version and normal version:"
+    quickCheck (forAll genForms prop_equivParse)
+    print "Testing tautology between parsed version and normal version:"
+    quickCheck (forAll genForms prop_tautParse)
+    print "Testing contradiction between parsed version and normal version:"
+    quickCheck (forAll genForms prop_contraParse)
+    print "Testing right entails between parsed version and normal version:"
+    quickCheck (forAll genForms prop_rEntailsParse)
+    print "Testing left entails between parsed version and normal version:"
+    quickCheck (forAll genForms prop_lEntailsParse)
+    print "Testing whether conversion is in parsed form:"
+    quickCheck (forAll genForms prop_followsGrammar)
+    print "Testing subsequent usage of show and parse"
+    quickCheck (forAll genForms prop_testShow)
 
 {- 
  - Exercise 3
@@ -66,8 +107,24 @@ convertSingle (key, val) | not val = Prop key
 
 {- 
  - Exercise 4
- - Time: 30 min
+ - Time: 140 min
  - A: 
+-}
+
+{- 
+Test Report:
+- Tests the Conjunctive Normal Form converter from exercise 3.
+- The following properties have been defined:
+    - Equivalence between the original form and the one converted to the CNF
+    - Retension of tautology in original form and converted.
+    - Retension of contradiction in original form and converted.
+    - Right entails; original entails converted
+    - Left entailss; converted entails original
+    - Check whether CNF is actually in CNF format.
+- To test these properties a generator for forms was written, 
+    which quikcheck can utilise.
+- This recursive generator is bounded by a sized paramater 
+    to guarantee it does not loop infinetely.
 -}
 prop_equivCNF :: Form -> Property
 prop_equivCNF f = True ==> equiv (converToCNF f) f
@@ -118,11 +175,69 @@ genForms' n = oneof [fmap Prop (suchThat arbitrary (\ n -> n > 0 && n < 5)),
   
 testCNF :: IO ()
 testCNF = do
-        quickCheck (forAll genForms prop_equivCNF)
-        quickCheck (forAll genForms prop_tautCNF)
-        quickCheck (forAll genForms prop_contraCNF)
-        quickCheck (forAll genForms prop_rEntailsCNF)
-        quickCheck (forAll genForms prop_lEntailsCNF)
-        quickCheck (forAll genForms prop_followsGrammar)
+    print "Testing equivalence between CNF version and normal version:"
+    quickCheck (forAll genForms prop_equivCNF)
+    print "Testing tautology between CNF version and normal version:"
+    quickCheck (forAll genForms prop_tautCNF)
+    print "Testing contradiction between CNF version and normal version:"
+    quickCheck (forAll genForms prop_contraCNF)
+    print "Testing right entails between CNF version and normal version:"
+    quickCheck (forAll genForms prop_rEntailsCNF)
+    print "Testing left entails between CNF version and normal version:"
+    quickCheck (forAll genForms prop_lEntailsCNF)
+    print "Testing whether conversion is in CNF form:"
+    quickCheck (forAll genForms prop_followsGrammar)
 
--- Todo testing report + prints with each test
+
+{- 
+ - Exercise 5
+ - Time: 30 min
+ - Property 1: Tests whether the subtrees of f are actually a subset of f.
+ - Property 2: 
+-}
+
+
+sub :: Form -> Set Form
+sub (Prop x) = Set [Prop x]
+sub (Neg f) = unionSet (Set [Neg f]) (sub f)
+sub f@(Cnj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
+sub f@(Dsj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
+sub f@(Impl f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
+sub f@(Equiv f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
+
+prop_isSubSetSub :: Form -> Property
+prop_isSubSetSub f = True ==> all (==True) $ map (\x -> show x `isInfixOf` fStr ) ((\ (Set l) -> l) (sub f))
+    where fStr = show f
+
+
+    -- prop_isMissingSub f = True ==> map (\x -> strReplace (show x) "" fStr ) ((\ (Set l) -> l) (sub f))
+    -- where fStr = show fstrReplace
+
+replace :: String -> String -> String -> String
+replace subStr repl str = T.unpack $ T.replace subStrT replT strT
+    where 
+        subStrT = T.pack subStr
+        replT = T.pack repl
+        strT = T.pack str
+
+-- prop_isMissingSub :: Form -> Property
+-- prop_isMissingSub f = map (\x -> replace (show x) "" fStr ) ((\ (Set l) -> l) (sub f))
+--     where fStr = show f
+
+testSub :: IO ()
+testSub = do
+    print "Tests whether the subtrees of f are actually a subset of f"
+    quickCheck (forAll genForms prop_isSubSetSub)
+    print ""
+    -- quickCheck (forAll genForms prop_isSubSetSub)
+
+nsub :: Form -> Int
+nsub f = length $ (\ (Set l) -> l) (nsub' f)
+
+nsub' :: Form -> Set Form
+nsub' (Prop x) = Set [Prop x]
+nsub' (Neg f) = unionSet (Set [Neg f]) (sub f)
+nsub' f@(Cnj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
+nsub' f@(Dsj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
+nsub' f@(Impl f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
+nsub' f@(Equiv f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
