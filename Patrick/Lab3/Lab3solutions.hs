@@ -128,14 +128,22 @@ cnf :: Form -> Form
 cnf = cnf' . nnf . arrowfree
     where
       cnf' :: Form -> Form
-      cnf' (Cnj [a,b]) = Cnj [(cnf' a), (cnf' b)]
-      cnf' (Dsj [a,b]) = dist (cnf' a) (cnf' b)
+      cnf' (Cnj fs)    = Cnj (map cnf' fs)
+      cnf' (Dsj fs)    = dist (map cnf' fs)
       cnf' f           = f
       
-      dist :: Form -> Form -> Form
-      dist (Cnj [a,b]) c = Cnj [(dist a c),(dist b c)]
-      dist a (Cnj [b,c]) = Cnj [(dist a b),(dist a c)]
-      dist a b           = Dsj [a,b]
+      -- dist recieves a list of the original Dsj arguemnts.
+      --  
+      dist :: [Form] -> Form
+      dist [Cnj [a, b], c] = Cnj [(dist [a, c]), (dist [b, c])]
+      dist [a, Cnj [b, c]] = Cnj [(dist [a, b]), (dist [a, c])]
+      dist fs              = Dsj fs
+
+testCnf = do
+    let numCases = length testParse_cases
+    let numPass = length (filter (\v -> v) [(evlHelper (cnf b)) == (evlHelper b) | (a,b) <- testParse_cases])
+    testRunHelper "cnf:output comparison" numCases numPass
+
 
 {- https://en.wikipedia.org/wiki/Negation_normal_form
 cnf' (Prop x) = Prop x
