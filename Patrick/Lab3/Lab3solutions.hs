@@ -16,7 +16,7 @@ evlHelper :: Form -> [Bool]
 evlHelper f = (map (\ v -> evl v f) (allVals f))
 
 {-
- - evlHerlper' taks two functions and runs all combinations of input parameters,
+ - evlHelper' taks two functions and runs all combinations of input parameters,
  - determined by the first function. Returning a list of tuples, results of f1 and f2
  - TODO: sort by propNames size, biggest first
  -}
@@ -93,10 +93,21 @@ testParse_cases =
     ("*(1 2 3)",          (Cnj [p, q, r])):
     []
 
-testParse = do
+{-
+ - the parse symmetry property states that when a Form is represented as a string, and this string is fed into the parse
+ - function. the parse function should return the origignal Form object.
+ -}
+prop_parseSymmetry :: Form -> Bool
+prop_parseSymmetry f = f == head (parse (show f))
+
+testParseCases = do
     let numCases = length testParse_cases
     let numPass = length (filter (\v -> v) [parse a == [b] | (a,b) <- testParse_cases])
-    testRunHelper "testParse" numCases numPass
+    testRunHelper "parse:known cases" numCases numPass
+
+testParseSymmetry = do
+    putStrLn "aPrse:symmetry property"
+    quickCheck prop_parseSymmetry
 
 {- 
  - Exercise 3
@@ -167,4 +178,14 @@ prop_alwaysTrue f = satisfiable f
  - A:
  -} 
 
+-- prop 1: sub returns at least 1?
+type Name = Int
+
+sub :: Form -> Set Form
+sub (Prop x) = Set [Prop x]
+sub (Neg f) = unionSet (Set [Neg f]) (sub f)
+sub f@(Cnj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
+sub f@(Dsj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
+sub f@(Impl f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
+sub f@(Equiv f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 
