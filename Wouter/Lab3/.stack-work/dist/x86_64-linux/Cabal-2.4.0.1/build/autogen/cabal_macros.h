@@ -33,17 +33,6 @@
   (major1) == 4 && (major2) == 12 && (minor) <= 0)
 #endif /* MIN_VERSION_base */
 
-/* package quickcheck-instances-0.3.22 */
-#ifndef VERSION_quickcheck_instances
-#define VERSION_quickcheck_instances "0.3.22"
-#endif /* VERSION_quickcheck_instances */
-#ifndef MIN_VERSION_quickcheck_instances
-#define MIN_VERSION_quickcheck_instances(major1,major2,minor) (\
-  (major1) <  0 || \
-  (major1) == 0 && (major2) <  3 || \
-  (major1) == 0 && (major2) == 3 && (minor) <= 22)
-#endif /* MIN_VERSION_quickcheck_instances */
-
 /* package random-1.1 */
 #ifndef VERSION_random
 #define VERSION_random "1.1"
@@ -54,6 +43,17 @@
   (major1) == 1 && (major2) <  1 || \
   (major1) == 1 && (major2) == 1 && (minor) <= 0)
 #endif /* MIN_VERSION_random */
+
+/* package text-1.2.3.1 */
+#ifndef VERSION_text
+#define VERSION_text "1.2.3.1"
+#endif /* VERSION_text */
+#ifndef MIN_VERSION_text
+#define MIN_VERSION_text(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  2 || \
+  (major1) == 1 && (major2) == 2 && (minor) <= 3)
+#endif /* MIN_VERSION_text */
 
 /* tool gcc-7 */
 #ifndef TOOL_VERSION_gcc
@@ -155,10 +155,10 @@
 #endif /* MIN_TOOL_VERSION_strip */
 
 #ifndef CURRENT_PACKAGE_KEY
-#define CURRENT_PACKAGE_KEY "solutions-stack-0.1.0.0-3iF60IirCte9xy1fQSy3Zo"
+#define CURRENT_PACKAGE_KEY "solutions-stack-0.1.0.0-GenbqTT4QZMIuVapY1OXuR"
 #endif /* CURRENT_PACKAGE_KEY */
 #ifndef CURRENT_COMPONENT_ID
-#define CURRENT_COMPONENT_ID "solutions-stack-0.1.0.0-3iF60IirCte9xy1fQSy3Zo"
+#define CURRENT_COMPONENT_ID "solutions-stack-0.1.0.0-GenbqTT4QZMIuVapY1OXuR"
 #endif /* CURRENT_COMPONENT_ID */
 #ifndef CURRENT_PACKAGE_VERSION
 #define CURRENT_PACKAGE_VERSION "0.1.0.0"

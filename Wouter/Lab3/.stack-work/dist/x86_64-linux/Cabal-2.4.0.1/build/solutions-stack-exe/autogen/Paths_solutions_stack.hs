@@ -29,12 +29,12 @@ version :: Version
 version = Version [0,1,0,0] []
 bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath
 
-bindir     = "/home/wouter/Dropbox/Master_Software_Engineering/SoftwareValidationVerification&Testing/SSVT2019-Group2/Lab2/.stack-work/install/x86_64-linux/c8dfd41241dacf9e054bd999480d41c56c270b6feca487ab7cd284e21ee64f58/8.6.5/bin"
-libdir     = "/home/wouter/Dropbox/Master_Software_Engineering/SoftwareValidationVerification&Testing/SSVT2019-Group2/Lab2/.stack-work/install/x86_64-linux/c8dfd41241dacf9e054bd999480d41c56c270b6feca487ab7cd284e21ee64f58/8.6.5/lib/x86_64-linux-ghc-8.6.5/solutions-stack-0.1.0.0-InR0iTdolc419zYu2PwpNf-solutions-stack-exe"
-dynlibdir  = "/home/wouter/Dropbox/Master_Software_Engineering/SoftwareValidationVerification&Testing/SSVT2019-Group2/Lab2/.stack-work/install/x86_64-linux/c8dfd41241dacf9e054bd999480d41c56c270b6feca487ab7cd284e21ee64f58/8.6.5/lib/x86_64-linux-ghc-8.6.5"
-datadir    = "/home/wouter/Dropbox/Master_Software_Engineering/SoftwareValidationVerification&Testing/SSVT2019-Group2/Lab2/.stack-work/install/x86_64-linux/c8dfd41241dacf9e054bd999480d41c56c270b6feca487ab7cd284e21ee64f58/8.6.5/share/x86_64-linux-ghc-8.6.5/solutions-stack-0.1.0.0"
-libexecdir = "/home/wouter/Dropbox/Master_Software_Engineering/SoftwareValidationVerification&Testing/SSVT2019-Group2/Lab2/.stack-work/install/x86_64-linux/c8dfd41241dacf9e054bd999480d41c56c270b6feca487ab7cd284e21ee64f58/8.6.5/libexec/x86_64-linux-ghc-8.6.5/solutions-stack-0.1.0.0"
-sysconfdir = "/home/wouter/Dropbox/Master_Software_Engineering/SoftwareValidationVerification&Testing/SSVT2019-Group2/Lab2/.stack-work/install/x86_64-linux/c8dfd41241dacf9e054bd999480d41c56c270b6feca487ab7cd284e21ee64f58/8.6.5/etc"
+bindir     = "/media/HDD/MasterSoftwareEngineering/SSVT2019-Group2/Wouter/Lab3/.stack-work/install/x86_64-linux/c8dfd41241dacf9e054bd999480d41c56c270b6feca487ab7cd284e21ee64f58/8.6.5/bin"
+libdir     = "/media/HDD/MasterSoftwareEngineering/SSVT2019-Group2/Wouter/Lab3/.stack-work/install/x86_64-linux/c8dfd41241dacf9e054bd999480d41c56c270b6feca487ab7cd284e21ee64f58/8.6.5/lib/x86_64-linux-ghc-8.6.5/solutions-stack-0.1.0.0-2gITbqUgBgAKyT3iO71rIO-solutions-stack-exe"
+dynlibdir  = "/media/HDD/MasterSoftwareEngineering/SSVT2019-Group2/Wouter/Lab3/.stack-work/install/x86_64-linux/c8dfd41241dacf9e054bd999480d41c56c270b6feca487ab7cd284e21ee64f58/8.6.5/lib/x86_64-linux-ghc-8.6.5"
+datadir    = "/media/HDD/MasterSoftwareEngineering/SSVT2019-Group2/Wouter/Lab3/.stack-work/install/x86_64-linux/c8dfd41241dacf9e054bd999480d41c56c270b6feca487ab7cd284e21ee64f58/8.6.5/share/x86_64-linux-ghc-8.6.5/solutions-stack-0.1.0.0"
+libexecdir = "/media/HDD/MasterSoftwareEngineering/SSVT2019-Group2/Wouter/Lab3/.stack-work/install/x86_64-linux/c8dfd41241dacf9e054bd999480d41c56c270b6feca487ab7cd284e21ee64f58/8.6.5/libexec/x86_64-linux-ghc-8.6.5/solutions-stack-0.1.0.0"
+sysconfdir = "/media/HDD/MasterSoftwareEngineering/SSVT2019-Group2/Wouter/Lab3/.stack-work/install/x86_64-linux/c8dfd41241dacf9e054bd999480d41c56c270b6feca487ab7cd284e21ee64f58/8.6.5/etc"
 
 getBinDir, getLibDir, getDynLibDir, getDataDir, getLibexecDir, getSysconfDir :: IO FilePath
 getBinDir = catchIO (getEnv "solutions_stack_bindir") (\_ -> return bindir)
