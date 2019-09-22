@@ -93,21 +93,21 @@ prop_testShow f = True ==> show (showParse f) == show f
 -- Unit tests:
 -- Explain + Use them on the show function and thend
 -- explain that we can then use show in our quickcheck tests.
-testParseCases = [
-    ("1",                 p),
-    ("2",                 q),
-    ("3",                 r),
-    ("-1",                Neg p),
-    ("--1",               Neg (Neg p)),
-    ("(1<=>2)",           Equiv p q),
-    ("(1==>2)",           Impl p q),
-    ("+(1 2 3)",          Dsj [p, q, r]),
-    ("*(1 2 3)",          Cnj [p, q, r])]
+parseKnownCases = [
+    ("1",        p),
+    ("2",        q),
+    ("3",        r),
+    ("-1",       Neg p),
+    ("--1",      Neg (Neg p)),
+    ("(1<=>2)",  Equiv p q),
+    ("(1==>2)",  Impl p q),
+    ("+(1 2 3)", Dsj [p, q, r]),
+    ("*(1 2 3)", Cnj [p, q, r])]
     
 testParseKnownCases = do
-    let numCases = length testParseCases
-    let numPass = length (filter (==True) [parse a == [b] | (a,b) <- testParseCases])
-    testRunHelper "Parse:known cases" numCases numPass
+    let numCases = length parseKnownCases
+    let numPass = length (filter (==True) [parse a == [b] | (a,b) <- parseKnownCases])
+    testRunHelper "known cases" numCases numPass
 
 testParse :: IO ()
 testParse = do
@@ -125,6 +125,10 @@ testParse = do
     quickCheck prop_followsGrammar
     print "Testing subsequent usage of show and parse"
     quickCheck prop_testShow
+    print "Testing known correct cases"
+    let numCases = length parseKnownCases
+    let numPass = length (filter (==True) [parse a == [b] | (a,b) <- parseKnownCases])
+    print (testRunHelper "known cases" numCases numPass)
 
 {- 
  - Exercise 3
