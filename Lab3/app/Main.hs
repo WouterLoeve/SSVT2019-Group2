@@ -6,3 +6,4 @@ import Lab3solutions
 
 main = do
     testParse
+    testCNF

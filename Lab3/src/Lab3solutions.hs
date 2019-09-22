@@ -133,22 +133,31 @@ testParse = do
 {- 
  - Exercise 3
  - Time: 120 min
- - A: 
- - Testing: 
-    - equivalence with f and CNF f
-    - if f is a tautology, CNF f should also be
-    - Same goes for contradiction
 -}
+
+
+{- 
+ - Inverts the inidividual atoms.
+ -}
 valToForm :: (Name, Bool) -> Form
 valToForm (name, val)
     | val = Neg $ Prop name
     | otherwise = Prop name
 
+{- 
+ - Converts a row to a clause used in the toCNF function.
+ -}
 rowToClause :: Valuation -> Form
 rowToClause row 
     | length row == 1 = valToForm $ head row
     | otherwise = Dsj $ valToForm <$> row
 
+{- 
+ - Converts a form to its Conjunctive normal form counterpart.
+ - The top level of this form is a conjunction which in turn consists of disjunctions.
+ - The construction is done by taking all rows in the truth table which correspond to false.
+ - The atoms are inverted and put in a disjunction for each row. These are then conjuncted to create the CNF form.
+ -}
 toCNF :: Form -> Form
 toCNF f 
     | length falseRows == 1 = rowToClause $ head falseRows 
@@ -158,9 +167,7 @@ toCNF f
 {- 
  - Exercise 4
  - Time: 140 min
--}
 
-{- 
 Test Report:
 - Tests the Conjunctive Normal Form converter from exercise 3.
 - The following properties have been defined:
@@ -169,12 +176,9 @@ Test Report:
     - Retension of contradiction in original form and converted.
     - Right entails; original entails converted
     - Left entailss; converted entails original
-    - Check whether CNF is actually in CNF format.
-- To test these properties a generator for forms was written, 
-    which quikcheck can utilise.
-- This recursive generator is bounded by a sized paramater 
-    to guarantee it does not loop infinetely.
+    - Check whether CNF is in CNF format.
 -}
+
 prop_equivCNF :: Form -> Property
 prop_equivCNF f = True ==> equiv (toCNF f) f
 
@@ -190,36 +194,66 @@ prop_rEntailsCNF f = True ==> f `entails` toCNF f
 prop_lEntailsCNF:: Form -> Property
 prop_lEntailsCNF f = True ==> toCNF f `entails` f
 
+
+{-
+ - Checks whether a form is a literal.
+ - Used in the prop_followsGrammar process.
+-}
 isLiteral :: Form -> Bool
 isLiteral (Prop _) = True
 isLiteral (Neg (Prop _)) = True
 isLiteral _ = False
 
+
+{-
+ - Checks whether a form is in clause format
+ - Used in the prop_followsGrammar process.
+-}
 isClause :: Form -> Bool
 isClause (Dsj ls) = all isLiteral ls
 isClause f = isLiteral f
 
+{-
+ - Checks whether the subsets of the conjunctions are all clauses.
+ - Used in the prop_followsGrammar function.
+-}
 isCNF :: Form -> Bool
 isCNF (Cnj cs) = all isClause cs
 isCNF f = isClause f
 
+{- 
+ - Checks whether a Form follows the CNF grammar.
+-}
 prop_followsGrammar :: Form -> Bool
 prop_followsGrammar f = isCNF $ toCNF f
 
-arbForm :: Integral a => a -> Gen Form
-arbForm 0 = fmap Prop (suchThat arbitrary (>0))
-arbForm n = frequency
+{-
+To test these properties a generator (arbForm) for forms was written, 
+    which quikcheck can utilise.
+This recursive generator is bounded by a sized paramater 
+    to guarantee it does not loop infinetely.
+We then take the square root of the of the size the sized gives us. 
+We do this since the CNF function doesn't scale favourably in quickChecks aggresive size upscaling. 
+Frequencies have also been defined to allow for easy frequency 
+    changing based on the application of the boolean functions.
+We do not advise to run this function trough the interpreter as it's significantly slower compared to building it and executing it. 
+The instruction to do so are in the readme of the git repository.
+-}
+
+arbForm' :: Integral a => a -> Gen Form
+arbForm' 0 = fmap Prop (suchThat arbitrary (>0))
+arbForm' n = frequency
     [ (1, fmap      Prop (suchThat arbitrary (>0))),
       (1, fmap      Neg param),
       (1, liftM2    Impl param param),
       (1, liftM2    Equiv param param),
       (1, fmap      Dsj (vectorOf 2 param)),
       (1, fmap      Cnj (vectorOf 2 param)) ]
-    where param = arbForm (n `div` 2)
+    where param = arbForm' (n `div` 2)
 
 instance Arbitrary Form where
-    arbitrary = sized arbForm
-  
+    arbitrary = sized $ \ n -> arbForm' (round (sqrt (fromIntegral n)))
+
 testCNF :: IO ()
 testCNF = do
     print "Testing equivalence between CNF version and normal version:"
@@ -242,8 +276,6 @@ testCNF = do
  - Property 1: Tests whether the subtrees of f are actually a subset of f.
  - Property 2: Test whether all subtrees are accounted for
 -}
-
-
 sub :: Form -> Set Form
 sub (Prop x) = Set [Prop x]
 sub (Neg f) = unionSet (Set [Neg f]) (sub f)
