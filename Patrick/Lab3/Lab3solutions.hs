@@ -32,11 +32,11 @@ testRunHelper testName numCases numPass = do
     let append = if numCases == numPass then "" else " ("++(show numFail)++" Failed)"
     prepend ++ testName ++ " : " ++ (show numPass) ++ " / " ++ (show numCases) ++ " passed" ++ append
 
-
 {- 
  - Exercise 1
- - Time:  min
- - A: 
+ - Time: 30 min
+ - A:
+ - TODO
  -}
 -- Definition of properties
 contradiction :: Form -> Bool
@@ -68,6 +68,11 @@ test_entailsB = Dsj [p, (Neg p)]         -- p or !p
 test_equivA = Neg (Dsj [p, q])           -- !(p or q)
 test_equivB = Cnj [(Neg p), (Neg q)]     -- (!p and !q)
 
+testProperties = 
+    contradiction (test_contradiction) &&
+    tautology test_tautology &&
+    entails test_entailsA test_entailsB &&
+    equiv test_equivA test_equivB
 
 {- 
  - Exercise 2
@@ -111,18 +116,12 @@ testParseSymmetry = do
 
 {- 
  - Exercise 3
- - Time:  min
+ - Time: 120 min
  - A:
- - I opted to first convert the equation to NNF, using the provided library function.
- - Next, I apply the boolean distribuive law in order to remove Disjunctions from the formula.
- -
- - Algorithm:
- - 1. convert to NNF, using exisiting function
- - 2. apply distributive law
- - https://stackoverflow.com/questions/655261/how-to-convert-a-propositional-formula-to-conjunctive-normal-form-cnf
- - See lab3 notes!!!
- - possible just match A or B and recurse for A and B
- - https://hackage.haskell.org/package/hatt-1.5.0.3/src/src/Data/Logic/Propositional/NormalForms.hs
+ - In order to implement the cnf function, I decided to first convert the equation to nnf.
+ - This was convenient, as the provided Lecture code already implemented a function to convert
+ - arbitrary equations into nnf format. After the conversion, I apply the distributive laws to
+ - remove Conjunctions from the formula. 
  -}
 cnf :: Form -> Form
 cnf = cnf' . nnf . arrowfree
@@ -133,34 +132,32 @@ cnf = cnf' . nnf . arrowfree
       cnf' f           = f
       
       -- dist recieves a list of the original Dsj arguemnts.
-      --  
       dist :: [Form] -> Form
       dist [Cnj [a, b], c] = Cnj [(dist [a, c]), (dist [b, c])]
       dist [a, Cnj [b, c]] = Cnj [(dist [a, b]), (dist [a, c])]
-      dist fs              = Dsj fs
+      dist fs | length fs > 3 = dist [head fs, dist (tail fs)]
+              | otherwise     = Dsj fs
 
-testCnf = do
+prop_cnfSymmetry :: Form -> Bool
+prop_cnfSymmetry f =
+    evlHelper f == evlHelper (cnf f)
+
+testCnfCases = do
     let numCases = length testParse_cases
     let numPass = length (filter (\v -> v) [(evlHelper (cnf b)) == (evlHelper b) | (a,b) <- testParse_cases])
     testRunHelper "cnf:output comparison" numCases numPass
 
-
-{- https://en.wikipedia.org/wiki/Negation_normal_form
-cnf' (Prop x) = Prop x
-cnf' (Neg (Prop x)) = Neg (Prop x)
-cnf' (Neg (Neg f)) = nnf f
-cnf' (Cnj fs) = Cnj (map nnf fs)
-cnf' (Dsj fs) = Dsj (map nnf fs)
-cnf' (Neg (Cnj fs)) = Dsj (map (nnf.Neg) fs)
-cnf' (Neg (Dsj fs)) = Cnj (map (nnf.Neg) fs)
--}
-
+testCnfSymmetry = do
+    verboseCheck prop_cnfSymmetry
 
 {- 
  - Exercise 4
- - Time:  min
- - A:
- -
+ - Time: 90 min
+ - A: 
+ - By defining the behaviour Arbitrary for the type Form, we can tell QuickCheck how it should
+ - generate a random Form. In this imlplementation, I used frequency so it is easy to tweak
+ - the generator function to produce desired equations. by altering the frequency we can for example
+ - increase the likelihood of short, single atom equations or the opposite.
  -} 
 
 -- generate arbitrary :: IO Form
@@ -177,9 +174,6 @@ arbForm n = frequency
 instance Arbitrary Form where
     arbitrary = sized arbForm
     
-prop_alwaysTrue :: Form -> Bool
-prop_alwaysTrue f = satisfiable f
-
 {- 
  - Exercise 5
  - Time:  min
