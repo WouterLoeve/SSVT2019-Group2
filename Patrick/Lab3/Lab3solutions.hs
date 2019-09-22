@@ -108,10 +108,10 @@ prop_parseSymmetry f = f == head (parse (show f))
 testParseCases = do
     let numCases = length testParse_cases
     let numPass = length (filter (\v -> v) [parse a == [b] | (a,b) <- testParse_cases])
-    testRunHelper "parse:known cases" numCases numPass
+    testRunHelper "Parse:known cases" numCases numPass
 
 testParseSymmetry = do
-    putStrLn "aPrse:symmetry property"
+    putStrLn "Parse:symmetry property"
     quickCheck prop_parseSymmetry
 
 {- 
@@ -178,6 +178,8 @@ instance Arbitrary Form where
  - Exercise 5
  - Time:  min
  - A:
+ - property 1: The size of the subtree must be smaller than that of the parent
+ - property 2: 
  -} 
 
 -- prop 1: sub returns at least 1?
