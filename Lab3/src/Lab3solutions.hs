@@ -17,9 +17,9 @@ import Lecture3
  -}
 testRunHelper testName numCases numPass = do
     let numFail = numCases - numPass
-    let prepend = if numFail > 0 then "**FAIL**  " else "  PASS    "
+    let prepend = if numFail > 0 then "--- FAIL" else "+++ OK"
     let append = if numCases == numPass then "" else " ("++ show numFail ++" Failed)"
-    prepend ++ testName ++ " : " ++ show numPass ++ " / " ++ show numCases ++ " passed" ++ append
+    prepend ++ ", Test '" ++ testName ++ "' Passed " ++ show numPass ++ " out of " ++ show numCases ++ " cases" ++ append
 
 {- 
  - Exercise 1
@@ -89,6 +89,17 @@ prop_lEntailsParse f = True ==> showParse f `entails` f
 prop_testShow :: Form -> Property
 prop_testShow f = True ==> show (showParse f) == show f
 
+{-
+ - We define a list of known equations and their respective string representation
+ - We can then use this list to test both the parse function (string to equation)
+ - As well as the implementation of `show` for the type From.
+ - Testing of the `show` method is included in `testParse` because some of the above
+ - properties to test the parse method depend on a correct implementation of `show` 
+ - for the type Form.
+ - We chose to use predefined strings and equations for this test, because in order to
+ - find bugs in the `show` implementation, we need a reference of which we know it is
+ - correct.
+ -}
 -- More testing methods???
 -- Unit tests:
 -- Explain + Use them on the show function and thend
@@ -103,14 +114,10 @@ parseKnownCases = [
     ("(1==>2)",  Impl p q),
     ("+(1 2 3)", Dsj [p, q, r]),
     ("*(1 2 3)", Cnj [p, q, r])]
-    
-testParseKnownCases = do
-    let numCases = length parseKnownCases
-    let numPass = length (filter (==True) [parse a == [b] | (a,b) <- parseKnownCases])
-    testRunHelper "known cases" numCases numPass
 
 testParse :: IO ()
 testParse = do
+    -- QuickCheck tests
     print "Testing equivalence between parsed version and normal version:"
     quickCheck prop_equivParse
     print "Testing tautology between parsed version and normal version:"
@@ -125,10 +132,17 @@ testParse = do
     quickCheck prop_followsGrammar
     print "Testing subsequent usage of show and parse"
     quickCheck prop_testShow
-    print "Testing known correct cases"
+    
+    -- test if parse on a string produces the expected equation
+    print "Testing parsing of known strings"
     let numCases = length parseKnownCases
-    let numPass = length (filter (==True) [parse a == [b] | (a,b) <- parseKnownCases])
-    print (testRunHelper "known cases" numCases numPass)
+    let numPassStrings = length (filter (==True) [parse a == [b] | (a,b) <- parseKnownCases])
+    putStrLn (testRunHelper "known show to equations" numCases numPassStrings)
+    
+    -- test if show on an equation produces expected string
+    print "Testing show of known equations"
+    let numPassEquations = length (filter (==True) [show b == a | (a,b) <- parseKnownCases])
+    putStrLn (testRunHelper "known equations to show" numCases numPassEquations)
 
 {- 
  - Exercise 3
