@@ -9,28 +9,54 @@ import Control.Monad
 import SetOrd
 import Lecture3
 
+{-
+ -
+ -}
+{-
+ - testRunhelper helps print results
+ -}
+testRunHelper testName numCases numPass = do
+    let numFail = numCases - numPass
+    let prepend = if numFail > 0 then "**FAIL**  " else "  PASS    "
+    let append = if numCases == numPass then "" else " ("++ show numFail ++" Failed)"
+    prepend ++ testName ++ " : " ++ show numPass ++ " / " ++ show numCases ++ " passed" ++ append
+
 {- 
  - Exercise 1
  - Time: 30 min
  - A: 
 -}
-getTruthTable :: Form -> [Bool]
-getTruthTable f = map (`evl` f) (allVals f)
+contradiction, tautology :: Form -> Bool
+contradiction = not . satisfiable
+tautology f = all (`evl` f) (allVals f)
 
-contradiction :: Form -> Bool
-contradiction f = all (==False) (getTruthTable f)
+entails, equiv :: Form -> Form -> Bool
+f `entails` g = tautology $ Impl g f
+f `equiv` g = tautology $ Equiv f g
 
-tautology :: Form -> Bool
-tautology f = all (==True) (getTruthTable f)
 
--- | logical entailment 
--- foreach assignment, form1 is true, form2 should also be true
-entails :: Form -> Form -> Bool
-entails f1 f2 = tautology $ Impl f2 f1
+-- contradiction & tautology
+testCaseContradiction = Equiv p (Neg p)     -- p == !p
+testCaseTautology = Equiv p p               -- p == p
 
--- | logical equivalence
-equiv :: Form -> Form -> Bool
-equiv f1 f2 = entails f1 f2 && entails f2 f1
+{-
+ - formEntailsA (just p) implies formEntailsB (always True)
+ - formEntailsB does not imply formEntailsA 
+ -     (there is a case where f1=True but f2=False for same params)
+ -}
+testCaseEntailsA = p                        -- p
+testCaseEntailsB = Dsj [p, Neg p]         -- p or !p
+
+-- Test using demorgan's theorem
+testCaseEquivA = Neg (Dsj [p, q])           -- !(p or q)
+testCaseEquivB = Cnj [Neg p, Neg q]     -- (!p and !q)
+
+testProperties = 
+    contradiction testCaseContradiction &&
+    tautology testCaseContradiction &&
+    testCaseEntailsA `entails` testCaseEntailsB &&
+    not (testCaseEntailsB `entails`testCaseEntailsA) &&
+    testCaseEquivA `equiv` testCaseEquivB
 
 {- 
  - Exercise 2
@@ -64,24 +90,41 @@ prop_testShow :: Form -> Property
 prop_testShow f = True ==> show (showParse f) == show f
 
 -- More testing methods???
--- Unit tests?
+-- Unit tests:
+-- Explain + Use them on the show function and thend
+-- explain that we can then use show in our quickcheck tests.
+testParseCases = [
+    ("1",                 p),
+    ("2",                 q),
+    ("3",                 r),
+    ("-1",                Neg p),
+    ("--1",               Neg (Neg p)),
+    ("(1<=>2)",           Equiv p q),
+    ("(1==>2)",           Impl p q),
+    ("+(1 2 3)",          Dsj [p, q, r]),
+    ("*(1 2 3)",          Cnj [p, q, r])]
+    
+testParseKnownCases = do
+    let numCases = length testParseCases
+    let numPass = length (filter (==True) [parse a == [b] | (a,b) <- testParseCases])
+    testRunHelper "Parse:known cases" numCases numPass
 
 testParse :: IO ()
 testParse = do
     print "Testing equivalence between parsed version and normal version:"
-    quickCheck (forAll genForms prop_equivParse)
+    quickCheck prop_equivParse
     print "Testing tautology between parsed version and normal version:"
-    quickCheck (forAll genForms prop_tautParse)
+    quickCheck prop_tautParse
     print "Testing contradiction between parsed version and normal version:"
-    quickCheck (forAll genForms prop_contraParse)
+    quickCheck prop_contraParse
     print "Testing right entails between parsed version and normal version:"
-    quickCheck (forAll genForms prop_rEntailsParse)
+    quickCheck prop_rEntailsParse
     print "Testing left entails between parsed version and normal version:"
-    quickCheck (forAll genForms prop_lEntailsParse)
+    quickCheck prop_lEntailsParse
     print "Testing whether conversion is in parsed form:"
-    quickCheck (forAll genForms prop_followsGrammar)
+    quickCheck prop_followsGrammar
     print "Testing subsequent usage of show and parse"
-    quickCheck (forAll genForms prop_testShow)
+    quickCheck prop_testShow
 
 {- 
  - Exercise 3
@@ -92,23 +135,25 @@ testParse = do
     - if f is a tautology, CNF f should also be
     - Same goes for contradiction
 -}
-converToCNF :: Form -> Form
-converToCNF f | tautology f = Cnj [Dsj [Prop 1, (Neg . Prop) 1], Dsj [Prop 1, (Neg . Prop) 1]]
-              | contradiction f = Cnj [Prop 1, (Neg . Prop) 1]
-              | otherwise = Cnj arr
-            where arr = [ convertStmt x | x <- allVals f, not $ evl x f]
+valToForm :: (Name, Bool) -> Form
+valToForm (name, val)
+    | val = Neg $ Prop name
+    | otherwise = Prop name
 
-convertStmt :: [(Name, Bool)] -> Form
-convertStmt x = Dsj $ convertSingle <$> x
+rowToClause :: Valuation -> Form
+rowToClause row 
+    | length row == 1 = valToForm $ head row
+    | otherwise = Dsj $ valToForm <$> row
 
-convertSingle :: (Name, Bool) -> Form
-convertSingle (key, val) | not val = Prop key
-                         | val = (Neg . Prop) key
+toCNF :: Form -> Form
+toCNF f 
+    | length falseRows == 1 = rowToClause $ head falseRows 
+    | otherwise =  Cnj $ rowToClause <$> falseRows
+    where falseRows = filter (\ v -> not $ evl v f) (allVals f)
 
 {- 
  - Exercise 4
  - Time: 140 min
- - A: 
 -}
 
 {- 
@@ -127,19 +172,19 @@ Test Report:
     to guarantee it does not loop infinetely.
 -}
 prop_equivCNF :: Form -> Property
-prop_equivCNF f = True ==> equiv (converToCNF f) f
+prop_equivCNF f = True ==> equiv (toCNF f) f
 
 prop_tautCNF :: Form -> Property
-prop_tautCNF f = True ==> tautology f == tautology (converToCNF f)
+prop_tautCNF f = True ==> tautology f == tautology (toCNF f)
 
 prop_contraCNF :: Form -> Property
-prop_contraCNF f = True ==> contradiction f == contradiction (converToCNF f)
+prop_contraCNF f = True ==> contradiction f == contradiction (toCNF f)
 
 prop_rEntailsCNF:: Form -> Property
-prop_rEntailsCNF f = True ==> f `entails` converToCNF f
+prop_rEntailsCNF f = True ==> f `entails` toCNF f
 
 prop_lEntailsCNF:: Form -> Property
-prop_lEntailsCNF f = True ==> converToCNF f `entails` f
+prop_lEntailsCNF f = True ==> toCNF f `entails` f
 
 isLiteral :: Form -> Bool
 isLiteral (Prop _) = True
@@ -155,45 +200,43 @@ isCNF (Cnj cs) = all isClause cs
 isCNF f = isClause f
 
 prop_followsGrammar :: Form -> Bool
-prop_followsGrammar f = isCNF $ converToCNF f
+prop_followsGrammar f = isCNF $ toCNF f
 
-genForms :: Gen Form
-genForms = sized $ \ n -> genForms' (round (sqrt (fromIntegral n)))
+arbForm :: Integral a => a -> Gen Form
+arbForm 0 = fmap Prop (suchThat arbitrary (>0))
+arbForm n = frequency
+    [ (1, fmap      Prop (suchThat arbitrary (>0))),
+      (1, fmap      Neg param),
+      (1, liftM2    Impl param param),
+      (1, liftM2    Equiv param param),
+      (1, fmap      Dsj (vectorOf 2 param)),
+      (1, fmap      Cnj (vectorOf 2 param)) ]
+    where param = arbForm (n `div` 2)
 
-genForms' :: Integer -> Gen Form
-genForms' 0 = fmap Prop (suchThat arbitrary (>0))
-genForms' n = oneof [fmap Prop (suchThat arbitrary (\ n -> n > 0 && n < 5)),
-                       fmap Neg poss1,
-                       liftM2 Impl poss1 poss2,
-                       liftM2 Equiv poss1 poss2,
-                       fmap Dsj (vectorOf 2 poss1),
-                       fmap Cnj (vectorOf 2 poss1)]
-                where 
-                    newN = n `div` 2
-                    poss1 = genForms' newN
-                    poss2 = genForms' (newN `div` 2)
+instance Arbitrary Form where
+    arbitrary = sized arbForm
   
 testCNF :: IO ()
 testCNF = do
     print "Testing equivalence between CNF version and normal version:"
-    quickCheck (forAll genForms prop_equivCNF)
+    quickCheck prop_equivCNF
     print "Testing tautology between CNF version and normal version:"
-    quickCheck (forAll genForms prop_tautCNF)
+    quickCheck prop_tautCNF
     print "Testing contradiction between CNF version and normal version:"
-    quickCheck (forAll genForms prop_contraCNF)
+    quickCheck prop_contraCNF
     print "Testing right entails between CNF version and normal version:"
-    quickCheck (forAll genForms prop_rEntailsCNF)
+    quickCheck prop_rEntailsCNF
     print "Testing left entails between CNF version and normal version:"
-    quickCheck (forAll genForms prop_lEntailsCNF)
+    quickCheck prop_lEntailsCNF
     print "Testing whether conversion is in CNF form:"
-    quickCheck (forAll genForms prop_followsGrammar)
+    quickCheck prop_followsGrammar
 
 
 {- 
  - Exercise 5
  - Time: 30 min
  - Property 1: Tests whether the subtrees of f are actually a subset of f.
- - Property 2: 
+ - Property 2: Test whether all subtrees are accounted for
 -}
 
 
@@ -209,25 +252,10 @@ prop_isSubSetSub :: Form -> Property
 prop_isSubSetSub f = True ==> all (==True) $ map (\x -> show x `isInfixOf` fStr ) ((\ (Set l) -> l) (sub f))
     where fStr = show f
 
-
-    -- prop_isMissingSub f = True ==> map (\x -> strReplace (show x) "" fStr ) ((\ (Set l) -> l) (sub f))
-    -- where fStr = show fstrReplace
-
-replace :: String -> String -> String -> String
-replace subStr repl str = T.unpack $ T.replace subStrT replT strT
-    where 
-        subStrT = T.pack subStr
-        replT = T.pack repl
-        strT = T.pack str
-
--- prop_isMissingSub :: Form -> Property
--- prop_isMissingSub f = map (\x -> replace (show x) "" fStr ) ((\ (Set l) -> l) (sub f))
---     where fStr = show f
-
 testSub :: IO ()
 testSub = do
     print "Tests whether the subtrees of f are actually a subset of f"
-    quickCheck (forAll genForms prop_isSubSetSub)
+    quickCheck prop_isSubSetSub
     print ""
     -- quickCheck (forAll genForms prop_isSubSetSub)
 
@@ -241,3 +269,37 @@ nsub' f@(Cnj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 nsub' f@(Dsj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 nsub' f@(Impl f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 nsub' f@(Equiv f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
+
+{- 
+    Keep list and use union at the end.
+-}
+
+{- 
+ - Exercise 6
+ - Time: 30 min
+-}
+
+type Clause = [Int]
+type Clauses = [Clause]
+
+literal2int :: Form -> Int
+literal2int (Prop name) = name
+literal2int (Neg (Prop name)) = - name
+
+clause2cl :: Form -> Clause
+clause2cl (Dsj ls) = literal2int <$> ls
+clause2cl f = [literal2int f]
+
+cnf2cls :: Form -> Clauses
+cnf2cls (Cnj cs) = clause2cl <$> cs
+cnf2cls f = [clause2cl f]
+
+{- 
+Testing Ideas:
+For each function/disjunction do:
+- Check whether variables are all accounted for
+- Check length of the list
+- Check negation
+
+- Make individual generators designed for each function.(stripped down version of our form generator)
+-}
