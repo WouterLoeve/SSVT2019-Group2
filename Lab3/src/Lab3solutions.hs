@@ -154,9 +154,7 @@ toCNF f
 {- 
  - Exercise 4
  - Time: 140 min
--}
 
-{- 
 Test Report:
 - Tests the Conjunctive Normal Form converter from exercise 3.
 - The following properties have been defined:
@@ -165,11 +163,13 @@ Test Report:
     - Retension of contradiction in original form and converted.
     - Right entails; original entails converted
     - Left entailss; converted entails original
-    - Check whether CNF is actually in CNF format.
-- To test these properties a generator for forms was written, 
+    - Check whether CNF is in CNF format.
+- To test these properties a generator (arbForm) for forms was written, 
     which quikcheck can utilise.
 - This recursive generator is bounded by a sized paramater 
     to guarantee it does not loop infinetely.
+- Frequencies have also been defined to allow for easy frequency 
+    changing based on the application of the boolean functions.
 -}
 prop_equivCNF :: Form -> Property
 prop_equivCNF f = True ==> equiv (toCNF f) f
@@ -202,20 +202,20 @@ isCNF f = isClause f
 prop_followsGrammar :: Form -> Bool
 prop_followsGrammar f = isCNF $ toCNF f
 
-arbForm :: Integral a => a -> Gen Form
-arbForm 0 = fmap Prop (suchThat arbitrary (>0))
-arbForm n = frequency
+arbForm' :: Integral a => a -> Gen Form
+arbForm' 0 = fmap Prop (suchThat arbitrary (>0))
+arbForm' n = frequency
     [ (1, fmap      Prop (suchThat arbitrary (>0))),
       (1, fmap      Neg param),
       (1, liftM2    Impl param param),
       (1, liftM2    Equiv param param),
       (1, fmap      Dsj (vectorOf 2 param)),
       (1, fmap      Cnj (vectorOf 2 param)) ]
-    where param = arbForm (n `div` 2)
+    where param = arbForm' (n `div` 2)
 
 instance Arbitrary Form where
-    arbitrary = sized arbForm
-  
+    arbitrary = sized $ \ n -> arbForm' (round (sqrt (fromIntegral n)))
+
 testCNF :: IO ()
 testCNF = do
     print "Testing equivalence between CNF version and normal version:"
