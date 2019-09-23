@@ -327,6 +327,13 @@ nsub' f@(Equiv f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 {- 
  - Exercise 6
  - Time: 30 min
+ - Testing: Test correct Int output and lengths of lists.
+ - If the above properties hold, the whole should be correct as well.
+ - It is difficult to test for correct contents without just reimplementing the conversion function.
+ - In fact, prop_correctInt more or less already does this.
+ - Additionally, test whether all variables are accounted for by checking substring of show.
+ - To do this we create a generator of each part of the CNF.
+ - Precondition for these properties is that the Form is in CNF.
 -}
 
 type Clause = [Int]
@@ -334,7 +341,7 @@ type Clauses = [Clause]
 
 literal2int :: Form -> Int
 literal2int (Prop name) = name
-literal2int (Neg (Prop name)) = - name
+literal2int (Neg (Prop name)) = -name
 
 clause2cl :: Form -> Clause
 clause2cl (Dsj ls) = literal2int <$> ls
@@ -344,12 +351,36 @@ cnf2cls :: Form -> Clauses
 cnf2cls (Cnj cs) = clause2cl <$> cs
 cnf2cls f = [clause2cl f]
 
-{- 
-Testing Ideas:
-For each function/disjunction do:
-- Check whether variables are all accounted for
-- Check length of the list
-- Check negation
+prop_correctInt :: Form -> Property
+prop_correctInt f@(Prop name) = isLiteral f ==> name == literal2int f
+prop_correctInt f@(Neg (Prop name)) = isLiteral f ==> -name == literal2int f
 
-- Make individual generators designed for each function.(stripped down version of our form generator)
--}
+prop_correctClauseLength :: Form -> Property
+prop_correctClauseLength f@(Dsj ls) = isClause f ==> length ls == (length . clause2cl) f
+prop_correctClauseLength f = isClause f ==> (length . clause2cl) f == 1
+
+prop_correctClausesLength :: Form -> Property
+prop_correctClausesLength f@(Cnj cs) = isCNF f ==> length cs == (length . cnf2cls) f 
+prop_correctClausesLength f = isCNF f ==> (length . cnf2cls) f == 1
+
+prop_allVariables :: Form -> Property
+prop_allVariables f = isCNF f ==> all (`isInfixOf` show f) (show <$> (concat . cnf2cls) f)
+
+gen_prop :: Gen Form
+gen_prop = frequency
+    [ (1, Prop <$> param),
+      (1, Neg . Prop <$> param)]
+    where param = suchThat arbitrary (>0)
+
+gen_clause :: Gen Form
+gen_clause = Dsj <$> listOf gen_prop
+
+gen_CNF :: Gen Form
+gen_CNF = Cnj <$> listOf gen_clause
+
+testClause :: IO ()
+testClause = do
+    quickCheck $ forAll gen_prop prop_correctInt
+    quickCheck $ forAll gen_clause prop_correctClauseLength
+    quickCheck $ forAll gen_CNF prop_correctClausesLength
+    quickCheck $ forAll gen_CNF prop_allVariables
