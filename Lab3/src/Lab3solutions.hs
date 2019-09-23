@@ -70,40 +70,40 @@ testProperties =
 showParse :: Form -> Form
 showParse f = head $ parse $ show f
 
+-- Property 1, an equation is equivalent to the paresed version of itself
 prop_equivParse :: Form -> Property
 prop_equivParse f = True ==> equiv (showParse f) f
 
+-- Property 2, an equation that is a tautology is still a tautology after parsing
 prop_tautParse :: Form -> Property
 prop_tautParse f = True ==> tautology f == tautology (showParse f)
 
+-- Property 3, an equation that is a contradiction is still a contradiction after parsing
 prop_contraParse :: Form -> Property
 prop_contraParse f = True ==> contradiction f == contradiction (showParse f)
 
+-- Property 4, an equation entails it's parsed form
 prop_rEntailsParse :: Form -> Property
 prop_rEntailsParse f = True ==> f `entails` showParse f
 
+-- Property 5, a parsed equation entails the original equation
 prop_lEntailsParse :: Form -> Property
 prop_lEntailsParse f = True ==> showParse f `entails` f
 
--- Not sure about this one??????
+-- Property 6, an the representation of an equation does not change after parsing
 prop_testShow :: Form -> Property
 prop_testShow f = True ==> show (showParse f) == show f
 
 {-
- - We define a list of known equations and their respective string representation
+ - We define a list of known equations and their respective string representation.
  - We can then use this list to test both the parse function (string to equation)
- - As well as the implementation of `show` for the type From.
- - Testing of the `show` method is included in `testParse` because some of the above
- - properties to test the parse method depend on a correct implementation of `show` 
- - for the type Form.
- - We chose to use predefined strings and equations for this test, because in order to
- - find bugs in the `show` implementation, we need a reference of which we know it is
- - correct.
+ - As well as the implementation of `show` for the type Form (equation to string).
+ - Testing of the `show` method is included because the above properties
+ - to test the parse method depend on a correct implementation of `show` for 
+ - the type Form. We chose to use predefined strings and equations for this test, 
+ - because in order to find bugs in the `show` implementation, we need references
+ - of correct strings and equations
  -}
--- More testing methods???
--- Unit tests:
--- Explain + Use them on the show function and thend
--- explain that we can then use show in our quickcheck tests.
 parseKnownCases = [
     ("1",        p),
     ("2",        q),
