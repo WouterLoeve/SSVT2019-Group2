@@ -10,3 +10,4 @@ main = do
     testParse
     testCNF
     testSub
+    testClause
