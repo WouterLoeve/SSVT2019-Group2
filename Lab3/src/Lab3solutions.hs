@@ -33,9 +33,17 @@ testContradictions, testTautologies :: [Form] -> Bool
 testContradictions fs = all (==True) $ contradiction <$> fs
 testTautologies fs = all (==True) $ tautology <$> fs
 
+testNegContradictions, testNegTautologies :: [Form] -> Bool
+testNegContradictions fs = all (==False) $ contradiction <$> fs
+testNegTautologies fs = all (==False) $ tautology <$> fs
+
 testEntails, testEquivs :: [Form] -> [Form] -> Bool
 f `testEntails` g = all (==True) $ zipWith entails f g
 f `testEquivs` g = all (==True) $ zipWith equiv f g
+
+testNegEntails, testNegEquivs :: [Form] -> [Form] -> Bool
+f `testNegEntails` g = all (==False) $ zipWith entails f g
+f `testNegEquivs` g = all (==False) $ zipWith equiv f g
 
 {-
  - Each logical form in testCaseContradiction should return false for
@@ -43,10 +51,17 @@ f `testEquivs` g = all (==True) $ zipWith equiv f g
  -
  - For three different cases, the contradiction function is tested by passing
  - the list of forms to testContradictions.
+ -
+ - The same is done for negative cases, where the formulae return True in
+ - some cases meaning these are no contradictions.
  -}
 testCaseContradiction = [Equiv p (Neg p),
                          Cnj [Equiv p (Neg q), Equiv q (Neg q)],
                          Dsj [Equiv p (Neg p), Equiv q (Neg q)]]
+
+testNegativeCaseContradiction = [p,
+                                 Equiv p (Dsj [p, p]),
+                                 Dsj [Equiv p (Neg q), Equiv q (Neg p)]]
 
 {-
  - Each logical form in testCaseTautology should return true for
@@ -54,11 +69,17 @@ testCaseContradiction = [Equiv p (Neg p),
  -
  - For three different cases, the tautology function is tested by passing
  - the list of forms to testTautologies.
+ -
+ - The same is done for negative cases, where the formulae do not always return true.
  -}
 
 testCaseTautology = [Equiv p p,
                      Dsj [p, Neg p],
                      Equiv (Neg (Cnj [p, q])) (Dsj [Neg p, Neg q])]
+
+testNegativeCaseTautology = [Equiv p q,
+                             Cnj [p, q],
+                             Cnj [Neg (Cnj [p, q]), Dsj [Neg p, Neg q]]]
 
 {-
  - testCaseEntailsB implies testCaseEntailsA
@@ -67,6 +88,8 @@ testCaseTautology = [Equiv p p,
  -
  - For three different cases, the entails function is tested by passing the
  - two lists to testEntails.
+ -
+ - The same is done for negative cases, where the B does not imply A.
  -}
 testCaseEntailsA = [p,
                     Dsj [q, Dsj [p, Neg p]],
@@ -75,11 +98,20 @@ testCaseEntailsB = [Dsj [p, Neg p],
                     Dsj [p, Neg p],
                     Dsj [p, Dsj [q, r]]]
 
+testNegativeCaseEntailsA = [p,
+                            Dsj [q, Dsj [p, Neg p]],
+                            Dsj [p, r]]
+testNegativeCaseEntailsB = [Cnj [p, Neg p],
+                            Dsj [p, p],
+                            Cnj [p, Dsj [q, r]]]
+
 {-
  - testCaseEquivA should have the same logical content as testCaseEquivB
 
  - For three different cases, the equiv function is tested by passing the
  - two lists to testEquivs.
+ -
+ - The same is done to test the negative cases, where the cases are not equivalent.
  -}
 
 testCaseEquivA = [Neg (Dsj [p, q]),
@@ -88,24 +120,36 @@ testCaseEquivA = [Neg (Dsj [p, q]),
 testCaseEquivB = [Cnj [Neg p, Neg q],
                   Cnj [p, p],
                   Dsj [p, Cnj [p, q]]]
+
+testNegativeCaseEquivA = [Neg (Dsj [p, q]),
+                          Dsj [p, p],
+                          Cnj [p, Dsj [p, q]]]
+testNegativeCaseEquivB = [Cnj [Neg p, r],
+                          Dsj [p, q],
+                          Cnj [p, Cnj [p, q]]]
 {-
  - Shortcut function to test all of the logical functions in one go.
  - We store the testcases in an array to print the pass/fail ratio.
  -}
 propertiesTestCases = [
     testContradictions testCaseContradiction,
+    testNegContradictions testNegativeCaseContradiction,
     testTautologies testCaseTautology,
+    testNegTautologies testNegativeCaseTautology,
     testCaseEntailsB `testEntails` testCaseEntailsA,
     not (testCaseEntailsA `testEntails`testCaseEntailsB),
-    testCaseEquivA `testEquivs` testCaseEquivB]
+    testNegativeCaseEntailsB `testNegEntails` testNegativeCaseEntailsA,
+    not (testNegativeCaseEntailsA `testNegEntails` testNegativeCaseEntailsB),
+    testCaseEquivA `testEquivs` testCaseEquivB,
+    testNegativeCaseEquivA `testNegEquivs` testNegativeCaseEquivB]
 
 testProperties = putStrLn (testRunHelper "testProperties" (length propertiesTestCases) (length (filter (==True) propertiesTestCases)))
 
 {-
  - Exercise 2
  - Time: 120 min
- - We test our parse function by first "showing" 
-        the formula, then parsing it and finally we test the properties 
+ - We test our parse function by first "showing"
+        the formula, then parsing it and finally we test the properties
         on the relation of the original function and the showed-parsed one.
  - The problem with this is that we rely on the show function giving us the correct result.
  - To solve this problem we also test the given show function to know with relative certainty that our test work.
@@ -136,8 +180,8 @@ parseKnownCases = [
 
 {-
  - Property 1, an equation is equivalent to the parsed version of itself
- - This is of course the strongest property, 
- -      since if something is equivalent with another version of itself, 
+ - This is of course the strongest property,
+ -      since if something is equivalent with another version of itself,
         the tautology, contradiction and right- and left-entail properties also hold.
  -}
 prop_equivParse :: Form -> Property
