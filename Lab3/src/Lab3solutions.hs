@@ -335,7 +335,7 @@ testCNF = do
  - Exercise 5
  - Time: 30 min
  - Property 1: Tests whether the subtrees of f are actually a subset of f.
- - Property 2: Test whether all subtrees are accounted for
+ - Property 2: Test whether the longest subtree is the tree itself
 -}
 sub :: Form -> Set Form
 sub (Prop x) = Set [Prop x]
@@ -349,12 +349,16 @@ prop_isSubSetSub :: Form -> Property
 prop_isSubSetSub f = True ==> all (==True) $ map (\x -> show x `isInfixOf` fStr ) ((\ (Set l) -> l) (sub f))
     where fStr = show f
 
+prop_longestSubtree f = 
+    let longest = maximumBy (\a b -> compare (length a) (length b)) (show <$> (\ (Set l) -> l) (sub f)) in
+    longest == (show f)
+
 testSub :: IO ()
 testSub = do
     print "Tests whether the subtrees of f are actually a subset of f"
     quickCheck prop_isSubSetSub
-    print ""
-    -- quickCheck (forAll genForms prop_isSubSetSub)
+    print "Tests wheter longest subtree of f is f"
+    quickCheck prop_longestSubtree
 
 nsub :: Form -> Int
 nsub f = length $ (\ (Set l) -> l) (nsub' f)
