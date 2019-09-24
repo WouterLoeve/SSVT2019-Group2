@@ -349,9 +349,8 @@ prop_isSubSetSub :: Form -> Property
 prop_isSubSetSub f = True ==> all (==True) $ map (\x -> show x `isInfixOf` fStr ) ((\ (Set l) -> l) (sub f))
     where fStr = show f
 
-prop_longestSubtree f = 
-    let longest = maximumBy (\a b -> compare (length a) (length b)) (show <$> (\ (Set l) -> l) (sub f)) in
-    longest == (show f)
+prop_longestSubtree :: Form -> Property
+prop_longestSubtree f = True ==> (show f) ==  maximumBy (\a b -> compare (length a) (length b)) (show <$> (\ (Set l) -> l) (sub f))
 
 testSub :: IO ()
 testSub = do
