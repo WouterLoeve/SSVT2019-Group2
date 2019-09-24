@@ -425,15 +425,15 @@ testSub = do
  - of the sub-formulae and the total amount of sub-formulae is then returned.
 -}
 nsub :: Form -> Int
-nsub f = length $ (\ (Set l) -> l) (nsub' f)
+nsub f = length $ (\ (Set l) -> l) (list2set (nsub' f))
 
-nsub' :: Form -> Set Form
-nsub' (Prop x) = Set [Prop x]
-nsub' (Neg f) = unionSet (Set [Neg f]) (sub f)
-nsub' f@(Cnj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
-nsub' f@(Dsj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
-nsub' f@(Impl f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
-nsub' f@(Equiv f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
+nsub' :: Form -> [Form]
+nsub' f@(Prop x) = [f] 
+nsub' f@(Neg f1) = [f] ++ nsub' f1
+nsub' f@(Cnj [f1,f2]) = [f] ++ nsub' f1 ++ nsub' f2
+nsub' f@(Dsj [f1,f2]) = [f] ++ nsub' f1 ++ nsub' f2
+nsub' f@(Impl f1 f2) = [f] ++ nsub' f1 ++ nsub' f2
+nsub' f@(Equiv f1 f2) = [f] ++ nsub' f1 ++ nsub' f2
 
 {-
  - As we don't want to implement the sub function again to test the functionality of the nsub function,
