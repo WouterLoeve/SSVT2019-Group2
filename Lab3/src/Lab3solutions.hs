@@ -53,7 +53,7 @@ f `testNegEquivs` g = all (==False) $ zipWith equiv f g
  - the list of forms to testContradictions.
  -
  - The same is done for negative cases, where the formulae return True in
- - some cases meaning these are no contradictions.
+ - some cases meaning these are no contradiction.
  -}
 testCaseContradiction = [Equiv p (Neg p),
                          Cnj [Equiv p (Neg q), Equiv q (Neg q)],
