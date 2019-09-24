@@ -363,6 +363,10 @@ prop_isSubSetSub :: Form -> Property
 prop_isSubSetSub f = True ==> all (==True) $ map (\x -> show x `isInfixOf` fStr ) ((\ (Set l) -> l) (sub f))
     where fStr = show f
 
+{-
+ - The longest subtree property states that the longest subequation in the result of sub is equal to
+ - the input equation. This is the case because the equation is itself one of the possible subequations.
+ -}
 prop_longestSubtree :: Form -> Property
 prop_longestSubtree f = True ==> (show f) == longest
     where longest = maximumBy (\a b -> compare (length a) (length b)) (show <$> (\ (Set l) -> l) (sub f))
@@ -390,10 +394,28 @@ nsub' f@(Dsj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 nsub' f@(Impl f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 nsub' f@(Equiv f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 
-
 {-
-    Keep list and use union at the end.
--}
+ - As we don't want to implement the sub function again to test the functionality of the nsub function,
+ - we decided to use a different approach. In this case, we know that just a property coincides with an nsub
+ - result of at least 1. We know that a negation has at least two subformulas. Any other operation has a least 3
+ - subformulas. As we don't want to recurse (because this would just be the sub function again) we only know the
+ - lower bound of a equation's length. This is however still a valid property.
+ - Originally, we also included Dsj and Cnj, but because an empty list are still valid for Dsj and Cnj we
+ - can only say for certain that the count of these equations should be at least 1. In that case the equation is
+ - (Dsj []) or the equation (Cnj []), with empty lists.
+ -}
+prop_nsubLength f =
+    nsub f >= minLength f
+    where
+        minLength :: Form -> Int
+        minLength (Neg x) = 2
+        minLength (Equiv a b) = 3
+        minLength (Impl a b) = 3
+        minLength f = 1
+
+testNsub = do
+    print "Tests nsub minimal length requirement"
+    quickCheck prop_nsubLength
 
 {-
  - Exercise 6
