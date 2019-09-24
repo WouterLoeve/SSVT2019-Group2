@@ -2,8 +2,6 @@ module Lab3solutions where
 import Data.List
 import Data.Char
 import Data.Tuple
-import qualified Data.Text as T
-import Text.Show.Functions
 import Test.QuickCheck
 import Control.Monad
 import SetOrd
@@ -92,9 +90,6 @@ testCaseEquivB = [Cnj [Neg p, Neg q],
                   Dsj [p, Cnj [p, q]]]
 {-
  - Shortcut function to test all of the logical functions in one go.
- -}
-
-{-
  - We store the testcases in an array to print the pass/fail ratio.
  -}
 propertiesTestCases = [
@@ -109,39 +104,15 @@ testProperties = do
 
 {-
  - Exercise 2
- - Time: 10 min
- - Options:
-    - use Format's to convert to String with Show, Parse them and use equiv.
-    - make seperate Format's and String notations and then use equiv
-    - Same as the above but then compare strings
-    - Instead of equiv check if contradiction, entails and tautology yield the same results
+ - Time: 120 min
+ - We test our parse function by first "showing" 
+        the formula, then parsing it and finally we test the properties 
+        on the relation of the original function and the showed-parsed one.
+ - The problem with this is that we rely on the show function giving us the correct result.
+ - To solve this problem we also test the given show function to know with relative certainty that our test work.
 -}
 showParse :: Form -> Form
 showParse f = head $ parse $ show f
-
--- Property 1, an equation is equivalent to the paresed version of itself
-prop_equivParse :: Form -> Property
-prop_equivParse f = True ==> equiv (showParse f) f
-
--- Property 2, an equation that is a tautology is still a tautology after parsing
-prop_tautParse :: Form -> Property
-prop_tautParse f = True ==> tautology f == tautology (showParse f)
-
--- Property 3, an equation that is a contradiction is still a contradiction after parsing
-prop_contraParse :: Form -> Property
-prop_contraParse f = True ==> contradiction f == contradiction (showParse f)
-
--- Property 4, an equation entails it's parsed form
-prop_rEntailsParse :: Form -> Property
-prop_rEntailsParse f = True ==> f `entails` showParse f
-
--- Property 5, a parsed equation entails the original equation
-prop_lEntailsParse :: Form -> Property
-prop_lEntailsParse f = True ==> showParse f `entails` f
-
--- Property 6, an the representation of an equation does not change after parsing
-prop_testShow :: Form -> Property
-prop_testShow f = True ==> show (showParse f) == show f
 
 {-
  - We define a list of known equations and their respective string representation.
@@ -163,6 +134,35 @@ parseKnownCases = [
     ("(1==>2)",  Impl p q),
     ("+(1 2 3)", Dsj [p, q, r]),
     ("*(1 2 3)", Cnj [p, q, r])]
+
+{-
+ - Property 1, an equation is equivalent to the parsed version of itself
+ - This is of course the strongest property, 
+ -      since if something is equivalent with another version of itself, 
+        the tautology, contradiction and right- and left-entail properties also hold.
+ -}
+prop_equivParse :: Form -> Property
+prop_equivParse f = True ==> equiv (showParse f) f
+
+-- Property 2, an equation that is a tautology is still a tautology after parsing
+prop_tautParse :: Form -> Property
+prop_tautParse f = True ==> tautology f == tautology (showParse f)
+
+-- Property 3, an equation that is a contradiction is still a contradiction after parsing
+prop_contraParse :: Form -> Property
+prop_contraParse f = True ==> contradiction f == contradiction (showParse f)
+
+-- Property 4, an equation entails its parsed form
+prop_rEntailsParse :: Form -> Property
+prop_rEntailsParse f = True ==> f `entails` showParse f
+
+-- Property 5, a parsed equation entails the original equation
+prop_lEntailsParse :: Form -> Property
+prop_lEntailsParse f = True ==> showParse f `entails` f
+
+-- Property 6, the representation of an equation does not change after parsing
+prop_testShow :: Form -> Property
+prop_testShow f = True ==> show (showParse f) == show f
 
 testParse :: IO ()
 testParse = do
@@ -196,11 +196,13 @@ testParse = do
 {-
  - Exercise 3
  - Time: 120 min
+ - For this exercise we use the truth table method.
+ - This means that we generate a truth table for the formula, then for all rows which are false we negate the atoms (along with their possible negation).
+ - Then we create disjunctions for these negated atoms which for each false row are the conjuncted to create the CNF.
 -}
 
-
 {-
- - Inverts the inidividual atoms.
+ - Negate the inidividual atoms.
  -}
 valToForm :: (Name, Bool) -> Form
 valToForm (name, val)
@@ -451,19 +453,22 @@ cnf2cls :: Form -> Clauses
 cnf2cls (Cnj cs) = clause2cl <$> cs
 cnf2cls f = [clause2cl f]
 
-
+-- Checks the implementation of literal2int
 prop_correctInt :: Form -> Property
 prop_correctInt f@(Prop name) = isLiteral f ==> name == literal2int f
 prop_correctInt f@(Neg (Prop name)) = isLiteral f ==> -name == literal2int f
 
+-- Checks the implementation of clause2cl by checking the length
 prop_correctClauseLength :: Form -> Property
 prop_correctClauseLength f@(Dsj ls) = isClause f ==> length ls == (length . clause2cl) f
 prop_correctClauseLength f = isClause f ==> (length . clause2cl) f == 1
 
+-- Checks the cnf2cls function by checking the length
 prop_correctClausesLength :: Form -> Property
 prop_correctClausesLength f@(Cnj cs) = isCNF f ==> length cs == (length . cnf2cls) f
 prop_correctClausesLength f = isCNF f ==> (length . cnf2cls) f == 1
 
+-- Checks the cnf2cls function by checking whether all variables are present in the clauses variant.
 prop_allVariables :: Form -> Property
 prop_allVariables f = isCNF f ==> all (`isInfixOf` show f) (show <$> (concat . cnf2cls) f)
 
@@ -481,7 +486,11 @@ gen_CNF = Cnj <$> listOf gen_clause
 
 testClause :: IO ()
 testClause = do
+    print "Checking the implementation of the literal2int function"
     quickCheck $ forAll gen_prop prop_correctInt
+    print "Checking the length of a single clause"
     quickCheck $ forAll gen_clause prop_correctClauseLength
+    print "Checking the length of the clauses"
     quickCheck $ forAll gen_CNF prop_correctClausesLength
+    print "Checks whether all variables are present in the clauses"
     quickCheck $ forAll gen_CNF prop_allVariables
