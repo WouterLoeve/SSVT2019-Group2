@@ -93,14 +93,13 @@ testCaseEquivB = [Cnj [Neg p, Neg q],
  - We store the testcases in an array to print the pass/fail ratio.
  -}
 propertiesTestCases = [
-    (testContradictions testCaseContradiction),
-    (testTautologies testCaseTautology),
-    (testCaseEntailsB `testEntails` testCaseEntailsA),
-    (not (testCaseEntailsA `testEntails`testCaseEntailsB)),
-    (testCaseEquivA `testEquivs` testCaseEquivB)]
+    testContradictions testCaseContradiction,
+    testTautologies testCaseTautology,
+    testCaseEntailsB `testEntails` testCaseEntailsA,
+    not (testCaseEntailsA `testEntails`testCaseEntailsB),
+    testCaseEquivA `testEquivs` testCaseEquivB]
 
-testProperties = do
-    putStrLn (testRunHelper "testProperties" (length propertiesTestCases) (length (filter (==True) propertiesTestCases)))
+testProperties = putStrLn (testRunHelper "testProperties" (length propertiesTestCases) (length (filter (==True) propertiesTestCases)))
 
 {-
  - Exercise 2
@@ -234,7 +233,9 @@ toCNF f
  - Time: 140 min
 
 Test Report:
-- Tests the Conjunctive Normal Form converter from exercise 3.
+- We approached this testing by first creating a generator for the form datastructure.
+- After that we created properties to test these our CNF converter from the previous exercise with.
+
 - The following properties have been defined:
     - Equivalence between the original form and the one converted to the CNF
     - Retension of tautology in original form and converted.
@@ -259,7 +260,6 @@ prop_rEntailsCNF f = True ==> f `entails` toCNF f
 prop_lEntailsCNF:: Form -> Property
 prop_lEntailsCNF f = True ==> toCNF f `entails` f
 
-
 {-
  - Checks whether a form is a literal.
  - Used in the prop_followsGrammar process.
@@ -268,7 +268,6 @@ isLiteral :: Form -> Bool
 isLiteral (Prop _) = True
 isLiteral (Neg (Prop _)) = True
 isLiteral _ = False
-
 
 {-
  - Checks whether a form is in clause format
@@ -293,17 +292,17 @@ prop_followsGrammar :: Form -> Bool
 prop_followsGrammar f = isCNF $ toCNF f
 
 {-
-To test these properties a generator (arbForm) for forms was written,
+ - To test these properties a generator (arbForm) for forms was written,
     which quikcheck can utilise.
-This recursive generator is bounded by a sized paramater
+ - This recursive generator is bounded by a sized paramater
     to guarantee it does not loop infinetely.
-We then take the square root of the of the size the sized gives us.
-We do this since the CNF function doesn't scale favourably in quickChecks aggresive size upscaling.
-Frequencies have also been defined to allow for easy frequency
+ - We then take the square root of the of the size the sized gives us.
+ - We do this since the CNF function doesn't scale favourably in quickChecks aggresive size upscaling.
+ - Frequencies have also been defined to allow for easy frequency
     changing based on the application of the boolean functions.
-We do not advise to run this function trough the interpreter as it's significantly slower compared to building it and executing it.
-The instruction to do so are in the readme of the git repository.
--}
+ - We do not advise to run this function trough the interpreter as it's significantly slower compared to building it and executing it.
+ - The instruction to do so are in the readme of the git repository.
+ -}
 
 arbForm' :: Integral a => a -> Gen Form
 arbForm' 0 = fmap Prop (suchThat arbitrary (>0))
@@ -366,7 +365,7 @@ prop_isSubSetSub f = True ==> all (==True) $ map (\x -> show x `isInfixOf` fStr 
  - the input equation. This is the case because the equation is itself one of the possible subequations.
  -}
 prop_longestSubtree :: Form -> Property
-prop_longestSubtree f = True ==> (show f) == longest
+prop_longestSubtree f = True ==> show f == longest
     where longest = maximumBy (\a b -> compare (length a) (length b)) (show <$> (\ (Set l) -> l) (sub f))
 
 testSub :: IO ()
@@ -405,6 +404,7 @@ nsub' f@(Equiv f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
  - This property only tests the lower bound for the nsub of an equation, for an exact number we would need to
  - recurse which esentially means reimplementing the sub function to test the nsub function.
  -}
+prop_nsubLength :: Form -> Bool
 prop_nsubLength f =
     nsub f >= minLength f
     where
@@ -422,6 +422,7 @@ prop_nsubLength f =
         minLength (Equiv a b) = 2
         minLength (Impl a b) = 2
 
+testNsub :: IO ()
 testNsub = do
     print "Tests nsub minimal length requirement"
     quickCheck prop_nsubLength
@@ -441,14 +442,23 @@ testNsub = do
 type Clause = [Int]
 type Clauses = [Clause]
 
+{-
+ - Converts a literal (name with possible a negate sign) to an int.
+ -}
 literal2int :: Form -> Int
 literal2int (Prop name) = name
 literal2int (Neg (Prop name)) = -name
 
+{-
+ - Converts a disjunctive term into the clause datatype.
+ -}
 clause2cl :: Form -> Clause
 clause2cl (Dsj ls) = literal2int <$> ls
 clause2cl f = [literal2int f]
 
+{-
+ - Converts a CNF form to clauses.
+ -}
 cnf2cls :: Form -> Clauses
 cnf2cls (Cnj cs) = clause2cl <$> cs
 cnf2cls f = [clause2cl f]
