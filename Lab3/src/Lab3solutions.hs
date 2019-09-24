@@ -366,6 +366,25 @@ testSub = do
     print "Tests whether longest subtree of f is f"
     quickCheck prop_longestSubtree
 
+{-
+ - As we don't want to implement the sub function again to test the functionality of the nsub function,
+ - we decided to use a different approach. In this case, we know that just a property coincides with an nsub
+ - result of at least 1. We know that a negation has at least two subformulas. Any other operation has a least 3
+ - subformulas. As we don't want to recurse (because this would just be the sub function again) we only know the
+ - lower bound of a equation's length. This is however still a valid property.
+ -}
+prop_nsubLength f =
+    nsub f >= minLength f
+    where
+        minLength :: Form -> Int
+        minLength (Prop x) = 1
+        minLength (Neg x) = 2
+        minLength f = 3
+
+testNsub = do
+    print "Tests nsub minimal length requirement"
+    quickCheck prop_nsubLength
+
 nsub :: Form -> Int
 nsub f = length $ (\ (Set l) -> l) (nsub' f)
 

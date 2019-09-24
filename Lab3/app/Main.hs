@@ -10,4 +10,5 @@ main = do
     testParse
     testCNF
     testSub
+    testNsub
     testClause
