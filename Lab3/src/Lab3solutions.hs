@@ -351,6 +351,14 @@ sub f@(Dsj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 sub f@(Impl f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 sub f@(Equiv f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 
+
+{-
+ - The first property tests whether the subtrees of f are actually a subset of f.
+ - This is implemented by getting all of the sub-formulae of the given form.
+ - For every sub-formula, the string is checked whether this is inside of the
+ - string of the form. If all of the strings of the sub-formulae are inside
+ - of the form, then the result will be True.
+-}
 prop_isSubSetSub :: Form -> Property
 prop_isSubSetSub f = True ==> all (==True) $ map (\x -> show x `isInfixOf` fStr ) ((\ (Set l) -> l) (sub f))
     where fStr = show f
@@ -366,6 +374,11 @@ testSub = do
     print "Tests whether longest subtree of f is f"
     quickCheck prop_longestSubtree
 
+{-
+ - The nsub function calculates the amount of sub-formulae of a given form, recursively.
+ - To do this, the original sub function is used in order to recursively collect all
+ - of the sub-formulae and the total amount of sub-formulae is then returned.
+-}
 nsub :: Form -> Int
 nsub f = length $ (\ (Set l) -> l) (nsub' f)
 
