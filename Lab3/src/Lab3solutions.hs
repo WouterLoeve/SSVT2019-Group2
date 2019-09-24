@@ -392,22 +392,33 @@ nsub' f@(Equiv f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 
 {-
  - As we don't want to implement the sub function again to test the functionality of the nsub function,
- - we decided to use a different approach. In this case, we know that just a property coincides with an nsub
- - result of at least 1. We know that a negation has at least two subformulas. Any other operation has a least 3
- - subformulas. As we don't want to recurse (because this would just be the sub function again) we only know the
- - lower bound of a equation's length. This is however still a valid property.
- - Originally, we also included Dsj and Cnj, but because an empty list are still valid for Dsj and Cnj we
- - can only say for certain that the count of these equations should be at least 1. In that case the equation is
- - (Dsj []) or the equation (Cnj []), with empty lists.
+ - we decided to use a different approach. In this case, we know that an equation that is just a property
+ - has an nsub result of at least 1. We know that a negation has at least two subformulas, so size 2.
+ - Conjugation and Disjunction can have empty lists in the current equation implementation, in this case
+ - the nsub result will be 1 (as the Conjugation or Disjunction still count as a subequation).
+ - A Conjunction or Disjunction with an non-empty list can still have repeating parameters, so we can only
+ - say for certain that either operation with a non-empty list contains at least 2 subequations.
+ - Both Equiv and Impl MUST have two arguments, but if these two arguments are equal we still get an nsub result
+ - of only 2, so the minimal nsub result for these function is 2.
+ - This property only tests the lower bound for the nsub of an equation, for an exact number we would need to
+ - recurse which esentially means reimplementing the sub function to test the nsub function.
  -}
 prop_nsubLength f =
     nsub f >= minLength f
     where
         minLength :: Form -> Int
+        -- 'simple' operations
+        minLength (Prop x) = 1
         minLength (Neg x) = 2
-        minLength (Equiv a b) = 3
-        minLength (Impl a b) = 3
-        minLength f = 1
+        -- Dsj & Cnj with empty list has minimal size 1
+        minLength (Dsj []) = 1
+        minLength (Cnj []) = 1
+        -- non-empty lists, but could still be Cnj [a,a,a,a,a], which has size 2
+        minLength (Dsj fs) = 2
+        minLength (Cnj fs) = 2
+        -- 2 here, because Equiv and Impl can have 2 identical arguments, such as Impl a a
+        minLength (Equiv a b) = 2
+        minLength (Impl a b) = 2
 
 testNsub = do
     print "Tests nsub minimal length requirement"
