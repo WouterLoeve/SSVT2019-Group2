@@ -21,10 +21,10 @@ testRunHelper testName numCases numPass = do
     let append = if numCases == numPass then "" else " ("++ show numFail ++" Failed)"
     prepend ++ ", Test '" ++ testName ++ "' Passed " ++ show numPass ++ " out of " ++ show numCases ++ " cases" ++ append
 
-{- 
+{-
  - Exercise 1
  - Time: 30 min
- - A: 
+ - A:
 -}
 contradiction, tautology :: Form -> Bool
 contradiction = not . satisfiable
@@ -35,30 +35,77 @@ f `entails` g = tautology $ Impl g f
 f `equiv` g = tautology $ Equiv f g
 
 
--- contradiction & tautology
-testCaseContradiction = Equiv p (Neg p)     -- p == !p
-testCaseTautology = Equiv p p               -- p == p
+testContradictions, testTautologies :: [Form] -> Bool
+testContradictions fs = all (==True) $ contradiction <$> fs
+testTautologies fs = all (==True) $ tautology <$> fs
+
+testEntails, testEquivs :: [Form] -> [Form] -> Bool
+f `testEntails` g = all (==True) $ zipWith entails f g
+f `testEquivs` g = all (==True) $ zipWith equiv f g
 
 {-
- - formEntailsA (just p) implies formEntailsB (always True)
- - formEntailsB does not imply formEntailsA 
- -     (there is a case where f1=True but f2=False for same params)
+ - Each logical form in testCaseContradiction should return false for
+ - every input of the variables.
+ -
+ - For three different cases, the contradiction function is tested by passing
+ - the list of forms to testContradictions.
  -}
-testCaseEntailsA = p                        -- p
-testCaseEntailsB = Dsj [p, Neg p]         -- p or !p
+testCaseContradiction = [Equiv p (Neg p),
+                         Cnj [Equiv p (Neg q), Equiv q (Neg q)],
+                         Dsj [Equiv p (Neg p), Equiv q (Neg q)]]
 
--- Test using demorgan's theorem
-testCaseEquivA = Neg (Dsj [p, q])           -- !(p or q)
-testCaseEquivB = Cnj [Neg p, Neg q]     -- (!p and !q)
+{-
+ - Each logical form in testCaseTautology should return true for
+ - every input of the variables.
+ -
+ - For three different cases, the tautology function is tested by passing
+ - the list of forms to testTautologies.
+ -}
 
-testProperties = 
-    contradiction testCaseContradiction &&
-    tautology testCaseContradiction &&
-    testCaseEntailsA `entails` testCaseEntailsB &&
-    not (testCaseEntailsB `entails`testCaseEntailsA) &&
-    testCaseEquivA `equiv` testCaseEquivB
+testCaseTautology = [Equiv p p,
+                     Dsj [p, Neg p],
+                     Equiv (Neg (Cnj [p, q])) (Dsj [Neg p, Neg q])]
 
-{- 
+{-
+ - testCaseEntailsB implies testCaseEntailsA
+ - testCaseEntailsA does not imply testCaseEntailsB
+ -     (there is a case where f1=True but f2=False for same params)
+ -
+ - For three different cases, the entails function is tested by passing the
+ - two lists to testEntails.
+ -}
+testCaseEntailsA = [p,
+                    Dsj [q, Dsj [p, Neg p]],
+                    Dsj [p, r]]
+testCaseEntailsB = [Dsj [p, Neg p],
+                    Dsj [p, Neg p],
+                    Dsj [p, Dsj [q, r]]]
+
+{-
+ - testCaseEquivA should have the same logical content as testCaseEquivB
+
+ - For three different cases, the equiv function is tested by passing the
+ - two lists to testEquivs.
+ -}
+
+testCaseEquivA = [Neg (Dsj [p, q]),
+                  Dsj [p, p],
+                  Cnj [p, Dsj [p, q]]]
+testCaseEquivB = [Cnj [Neg p, Neg q],
+                  Cnj [p, p],
+                  Dsj [p, Cnj [p, q]]]
+{-
+ - Shortcut function to test all of the logical functions in one go.
+ -}
+
+testProperties =
+    testContradictions testCaseContradiction &&
+    testTautologies testCaseTautology &&
+    testCaseEntailsB `testEntails` testCaseEntailsA &&
+    not (testCaseEntailsA `testEntails`testCaseEntailsB) &&
+    testCaseEquivA `testEquivs` testCaseEquivB
+
+{-
  - Exercise 2
  - Time: 10 min
  - Options:
@@ -94,7 +141,7 @@ prop_testShow f = True ==> show (showParse f) == show f
  - We can then use this list to test both the parse function (string to equation)
  - As well as the implementation of `show` for the type From.
  - Testing of the `show` method is included in `testParse` because some of the above
- - properties to test the parse method depend on a correct implementation of `show` 
+ - properties to test the parse method depend on a correct implementation of `show`
  - for the type Form.
  - We chose to use predefined strings and equations for this test, because in order to
  - find bugs in the `show` implementation, we need a reference of which we know it is
@@ -132,25 +179,25 @@ testParse = do
     quickCheck prop_followsGrammar
     print "Testing subsequent usage of show and parse"
     quickCheck prop_testShow
-    
+
     -- test if parse on a string produces the expected equation
     print "Testing parsing of known strings"
     let numCases = length parseKnownCases
     let numPassStrings = length (filter (==True) [parse a == [b] | (a,b) <- parseKnownCases])
     putStrLn (testRunHelper "known show to equations" numCases numPassStrings)
-    
+
     -- test if show on an equation produces expected string
     print "Testing show of known equations"
     let numPassEquations = length (filter (==True) [show b == a | (a,b) <- parseKnownCases])
     putStrLn (testRunHelper "known equations to show" numCases numPassEquations)
 
-{- 
+{-
  - Exercise 3
  - Time: 120 min
 -}
 
 
-{- 
+{-
  - Inverts the inidividual atoms.
  -}
 valToForm :: (Name, Bool) -> Form
@@ -158,27 +205,27 @@ valToForm (name, val)
     | val = Neg $ Prop name
     | otherwise = Prop name
 
-{- 
+{-
  - Converts a row to a clause used in the toCNF function.
  -}
 rowToClause :: Valuation -> Form
-rowToClause row 
+rowToClause row
     | length row == 1 = valToForm $ head row
     | otherwise = Dsj $ valToForm <$> row
 
-{- 
+{-
  - Converts a form to its Conjunctive normal form counterpart.
  - The top level of this form is a conjunction which in turn consists of disjunctions.
  - The construction is done by taking all rows in the truth table which correspond to false.
  - The atoms are inverted and put in a disjunction for each row. These are then conjuncted to create the CNF form.
  -}
 toCNF :: Form -> Form
-toCNF f 
-    | length falseRows == 1 = rowToClause $ head falseRows 
+toCNF f
+    | length falseRows == 1 = rowToClause $ head falseRows
     | otherwise =  Cnj $ rowToClause <$> falseRows
     where falseRows = filter (\ v -> not $ evl v f) (allVals f)
 
-{- 
+{-
  - Exercise 4
  - Time: 140 min
 
@@ -235,22 +282,22 @@ isCNF :: Form -> Bool
 isCNF (Cnj cs) = all isClause cs
 isCNF f = isClause f
 
-{- 
+{-
  - Checks whether a Form follows the CNF grammar.
 -}
 prop_followsGrammar :: Form -> Bool
 prop_followsGrammar f = isCNF $ toCNF f
 
 {-
-To test these properties a generator (arbForm) for forms was written, 
+To test these properties a generator (arbForm) for forms was written,
     which quikcheck can utilise.
-This recursive generator is bounded by a sized paramater 
+This recursive generator is bounded by a sized paramater
     to guarantee it does not loop infinetely.
-We then take the square root of the of the size the sized gives us. 
-We do this since the CNF function doesn't scale favourably in quickChecks aggresive size upscaling. 
-Frequencies have also been defined to allow for easy frequency 
+We then take the square root of the of the size the sized gives us.
+We do this since the CNF function doesn't scale favourably in quickChecks aggresive size upscaling.
+Frequencies have also been defined to allow for easy frequency
     changing based on the application of the boolean functions.
-We do not advise to run this function trough the interpreter as it's significantly slower compared to building it and executing it. 
+We do not advise to run this function trough the interpreter as it's significantly slower compared to building it and executing it.
 The instruction to do so are in the readme of the git repository.
 -}
 
@@ -284,7 +331,7 @@ testCNF = do
     quickCheck prop_followsGrammar
 
 
-{- 
+{-
  - Exercise 5
  - Time: 30 min
  - Property 1: Tests whether the subtrees of f are actually a subset of f.
@@ -320,11 +367,11 @@ nsub' f@(Dsj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 nsub' f@(Impl f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 nsub' f@(Equiv f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 
-{- 
+{-
     Keep list and use union at the end.
 -}
 
-{- 
+{-
  - Exercise 6
  - Time: 30 min
 -}
@@ -344,7 +391,7 @@ cnf2cls :: Form -> Clauses
 cnf2cls (Cnj cs) = clause2cl <$> cs
 cnf2cls f = [clause2cl f]
 
-{- 
+{-
 Testing Ideas:
 For each function/disjunction do:
 - Check whether variables are all accounted for
