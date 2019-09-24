@@ -10,9 +10,6 @@ import SetOrd
 import Lecture3
 
 {-
- -
- -}
-{-
  - testRunhelper helps print results
  -}
 testRunHelper testName numCases numPass = do
@@ -24,7 +21,6 @@ testRunHelper testName numCases numPass = do
 {-
  - Exercise 1
  - Time: 30 min
- - A:
 -}
 contradiction, tautology :: Form -> Bool
 contradiction = not . satisfiable
