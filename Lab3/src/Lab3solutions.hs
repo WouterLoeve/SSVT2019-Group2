@@ -98,12 +98,18 @@ testCaseEquivB = [Cnj [Neg p, Neg q],
  - Shortcut function to test all of the logical functions in one go.
  -}
 
-testProperties =
-    testContradictions testCaseContradiction &&
-    testTautologies testCaseTautology &&
-    testCaseEntailsB `testEntails` testCaseEntailsA &&
-    not (testCaseEntailsA `testEntails`testCaseEntailsB) &&
-    testCaseEquivA `testEquivs` testCaseEquivB
+{-
+ - We store the testcases in an array to print the pass/fail ratio.
+ -}
+propertiesTestCases = [
+    (testContradictions testCaseContradiction),
+    (testTautologies testCaseTautology),
+    (testCaseEntailsB `testEntails` testCaseEntailsA),
+    (not (testCaseEntailsA `testEntails`testCaseEntailsB)),
+    (testCaseEquivA `testEquivs` testCaseEquivB)]
+
+testProperties = do
+    putStrLn (testRunHelper "testProperties" (length propertiesTestCases) (length (filter (==True) propertiesTestCases)))
 
 {-
  - Exercise 2
@@ -350,13 +356,14 @@ prop_isSubSetSub f = True ==> all (==True) $ map (\x -> show x `isInfixOf` fStr 
     where fStr = show f
 
 prop_longestSubtree :: Form -> Property
-prop_longestSubtree f = True ==> (show f) ==  maximumBy (\a b -> compare (length a) (length b)) (show <$> (\ (Set l) -> l) (sub f))
+prop_longestSubtree f = True ==> (show f) == longest
+    where longest = maximumBy (\a b -> compare (length a) (length b)) (show <$> (\ (Set l) -> l) (sub f))
 
 testSub :: IO ()
 testSub = do
     print "Tests whether the subtrees of f are actually a subset of f"
     quickCheck prop_isSubSetSub
-    print "Tests wheter longest subtree of f is f"
+    print "Tests whether longest subtree of f is f"
     quickCheck prop_longestSubtree
 
 nsub :: Form -> Int
@@ -369,6 +376,7 @@ nsub' f@(Cnj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 nsub' f@(Dsj [f1,f2]) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 nsub' f@(Impl f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
 nsub' f@(Equiv f1 f2) = unionSet ( unionSet (Set [f]) (sub f1)) (sub f2)
+
 
 {-
     Keep list and use union at the end.

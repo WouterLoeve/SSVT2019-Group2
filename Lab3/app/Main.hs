@@ -4,9 +4,9 @@ import Test.QuickCheck
 import Data.Char
 import Lab3solutions
 
+main :: IO ()
 main = do
-    print "Testing properties"
-    print (if testProperties then "PASS" else "FAIL" )
+    testProperties
     testParse
     testCNF
     testSub
