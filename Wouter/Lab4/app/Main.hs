@@ -2,19 +2,19 @@ import Text.Printf
 import Data.List
 import Test.QuickCheck
 import Data.Char
-import Lab3solutions
+import Lab4solutions
 
 main :: IO ()
 main = do
     print "Generator size is bounded but could still run for quite a while; we recommend building it instead of running it with the interactive mode."
     print "--Exercise 1--"
-    testProperties
+    -- testProperties
     print "--Exercise 2--"
-    testParse
+    -- testParse
     print "--Exercise (3 &) 4--"
-    testCNF
+    -- testCNF
     print "--Exercise 5--"
-    testSub
-    testNsub
+    -- testSub
+    -- testNsub
     print "--Exercise 6--"
-    testClause
+    -- testClause
