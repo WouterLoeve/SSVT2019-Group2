@@ -70,3 +70,8 @@ r @@ s = nub [ (x,z) | (x,y) <- r, (w,z) <- s, y == w ]
 trClos :: Ord a => Rel a -> Rel a 
 trClos r = fix (\ f s -> if s == s `union` (r @@ s) then s else f $ s `union` (r @@ s)) r
 
+{- E7
+ - The basic relation R = [(a, b)] is a counterexample; 
+ -  the transitive closure of the symmetric closure will include the reflexive closure as well.
+ - i.e. sc tc [(a, b)] = [(a, b), (b, a)], tc sc [(a, b)] = [(a, b), (b, a), (a, a), (b, b)]
+-}
