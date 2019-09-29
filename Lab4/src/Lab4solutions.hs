@@ -25,14 +25,24 @@ testRunHelper testName numCases numPass = do
 {-
  - Testing from scratch
 -}
+
+{-
+ - Generates a random set with x values between 0 and x.
+-}
 randomSet :: Int -> IO (SetOrd.Set Int)
 randomSet x = do
     g <- newStdGen
     return $ list2set $ take x (randomRs (0, x) g :: [Int])
 
+{-
+ - Generates random sets with lengths 1 to 10^8.
+-}
 listRandomSetLog :: IO [Set Int]
 listRandomSetLog = mapM (randomSet . (10 ^)) [0 .. 8]
 
+{-
+ - Tests the properties with our random set generator.
+-}
 testSetOwnGen :: IO ()
 testSetOwnGen = do
     ownGenTestProp prop_setNoDups "Checking whether no duplicates are present in the set" >>= putStrLn
@@ -55,15 +65,26 @@ ownGenTestProp f name = liftM2 (testRunHelper name) numCases numPass
 {-
  - QuickCheck tests
 -}
+
+{-
+ - Generates an arbitrary set of length s.
+-}
 arbSet :: Arbitrary a => Int -> Gen (Set a)
 arbSet s = do
     n <- choose (0, s)
     l <- vectorOf n arbitrary
     return $ Set l
 
+{-
+ - Makes a sized version of the aforementioned arbSet arbitrary 
+    so no function has to be specified.
+-}
 instance Arbitrary a => Arbitrary (Set a) where
     arbitrary = sized arbSet
 
+{-
+ - Tests the properties with the quickhcheck set generator.
+-}
 testSetProp :: IO ()
 testSetProp = do
     print "Testing whether Sets contain duplicates"
@@ -76,9 +97,15 @@ testSetProp = do
  - Properties tests
 -}
 
+{-
+ - A set should not contain duplicates.
+-}
 prop_setNoDups :: SetOrd.Set Int -> Bool
 prop_setNoDups (Set a) = length a == length (nub a)
 
+{-
+ - A set is ordered.
+-}
 prop_setOrdered :: Set Int -> Bool
 prop_setOrdered (Set a) = sort a == a
 
@@ -94,7 +121,6 @@ setDifference (Set xs) (Set ys) = list2set (xs \\ ys)
 {-
  - Properties
  -}
-
 prop_unionInter :: Set Int -> Set Int -> Bool
 prop_unionInter xs ys = (xs `setIntersect` ys) `subSet` (xs `setUnion` ys)
 
@@ -214,3 +240,10 @@ trClos r = sort $ fix (\ f s -> if s == s `union` (r @@ s) then s else f $ s `un
 illustrateDiff = do
     print $ "Symmetric closure of the transitive closure " ++ show (symClos $ trClos [(1,2)])
     print $ "Transitive closure of the symmetric closure " ++ show (trClos $ symClos [(1,2)])
+
+{-
+ - Exercise 9
+ - Time:  min
+ -}
+
+ 
