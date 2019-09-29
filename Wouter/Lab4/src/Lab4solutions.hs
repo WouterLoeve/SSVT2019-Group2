@@ -41,7 +41,6 @@ testSetOwnGen = do
     ownGenTestProp prop_setOrdered "Checking whether the set is ordered" >>= putStrLn
     
 
-
 {-
  - Tests a given property for a sets with random test 
     cases of the set of ints defined in SetOrd.

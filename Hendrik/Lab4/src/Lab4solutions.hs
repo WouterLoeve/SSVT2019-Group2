@@ -48,15 +48,13 @@ a >\\< b = list2set $ set2list a \\ set2list b
 
 {- E3
 -}
-
 type Rel a = [(a,a)]
 
 symClos :: Ord a => Rel a -> Rel a
-symClos r = union r $ swap <$> r 
+symClos r = r `union` swap <$> r 
 
 {- E4
 -}
-
 isSerial :: Eq a => [a] -> Rel a -> Bool
 isSerial d r = all (`elem` r') d
     where r' = fst <$> filter (\ (_, b) -> b `elem` d) r

@@ -42,8 +42,8 @@ instance Arbitrary a => Arbitrary (Set a) where
 -}
 
 setUnion, setIntersect, setDifference :: Ord a => Set a -> Set a -> Set a
-setUnion      (Set xs) (Set ys) = Set (union xs ys)
-setIntersect  (Set xs) (Set ys) = Set (intersect xs ys)
+setUnion      (Set xs) (Set ys) = Set (xs `union` ys)
+setIntersect  (Set xs) (Set ys) = Set (xs `intersect` ys)
 setDifference (Set xs) (Set ys) = Set (xs \\ ys)
 
 -- Helper function to compare sets (because order might differ)
