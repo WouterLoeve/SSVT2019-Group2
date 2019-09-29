@@ -245,5 +245,3 @@ illustrateDiff = do
  - Exercise 9
  - Time:  min
  -}
-
- 

@@ -18,3 +18,4 @@ main = do
     -- testNsub
     print "--Exercise 6--"
     -- testClause
+
