@@ -386,3 +386,16 @@ illustrateDiff = do
  - Exercise 9
  - Time:  min
  -}
+uk :: Double -> Int -> Double
+uk r k = (900 - 3 * fromIntegral k) * (r^( (fromIntegral k)-1))
+
+target = -(6*10^11)
+minimumNum = 0.000000000001
+
+sn x = sum [uk x k | k <- [1..5000]]
+
+euler235 low high | result < target = euler235 low mid
+            | result > target = euler235 mid high
+            | high - low > minimumNum = mid
+    where mid = (high+low)/2
+          result = sn mid
