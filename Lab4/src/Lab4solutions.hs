@@ -216,6 +216,8 @@ isSerial dom rel = all (\x -> or [(x, y) `elem` rel | y <- dom]) dom
 {-
  - Exercise 5
  - Time: 30 min
+ - Compute the transitive closure by recursively taking the union with the 
+    relation composition until a fixed point is reached.
 -}
 
 infixr 5 @@
@@ -224,7 +226,8 @@ r @@ s =
   nub [ (x,z) | (x,y) <- r, (w,z) <- s, y == w ]
 
 trClos :: Ord a => Rel a -> Rel a 
-trClos r = sort $ fix (\ f s -> if s == s `union` (r @@ s) then s else f $ s `union` (r @@ s)) r
+trClos r = sort $ fix (\ f s -> if s == unComp s then s else f $ unComp s) r
+    where unComp s = s `union` (r @@ s)
 
 {-
  - Exercise 6
