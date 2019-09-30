@@ -332,6 +332,14 @@ testSetOperatorsOwnGen = do
 -}
 type Rel a = [(a,a)]
 
+{-
+ - A symmetric closure S of a relation R is defined as the union of R with it's converse relation.
+ - The converse relation is defined as {(x,y) : (y,x) in R}. This means that we swap the two variables
+ - in every tuple in R, so (1,2) becomes (2,1). The below implementation does exactly this:
+ - 1. map and 'swap' are used to create the converse relation of R
+ - 2. a union is made of R with the converse relation
+ - 3. the result is sorted to make the result ordered
+ -}
 symClos :: Ord a => Rel a -> Rel a
 symClos r = sort $ r `union` (swap <$> r) 
 
