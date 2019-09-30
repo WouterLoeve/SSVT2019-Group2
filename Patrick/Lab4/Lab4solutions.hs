@@ -21,6 +21,12 @@ import Lecture3
 --arbSetInt s = do
 --    return sample $ resize 1000 (arbitrary :: IO (Set Int))
 
+-- from scratch implementation
+randIntSet s = do
+    seed <- newStdGen
+    return $ Set (take s (randoms seed :: [Int]))
+
+-- QuickCheck implementation
 arbSet :: Arbitrary a => Int -> Gen (Set a)
 arbSet s = do
     n <- choose (0, s)
@@ -36,9 +42,53 @@ instance Arbitrary a => Arbitrary (Set a) where
 -}
 
 setUnion, setIntersect, setDifference :: Ord a => Set a -> Set a -> Set a
-setUnion      (Set xs) (Set ys) = Set (union xs ys)
-setIntersect  (Set xs) (Set ys) = Set (intersect xs ys)
-setDifference (Set xs) (Set ys) = Set ((xs \\ ys)++(ys \\ xs)) -- Sets are unordered, so both variations included
+setUnion      (Set xs) (Set ys) = Set (xs `union` ys)
+setIntersect  (Set xs) (Set ys) = Set (xs `intersect` ys)
+setDifference (Set xs) (Set ys) = Set (xs \\ ys)
+
+-- Helper function to compare sets (because order might differ)
+setEqual :: Eq a => Set a -> Set a -> Bool
+setEqual (Set a) (Set b) = null (a \\ b) && null (b \\ a)
+
+-- A u B == B u A
+prop_setUnionCommutative :: Set Int -> Set Int -> Bool
+prop_setUnionCommutative a b = setEqual (setUnion a b) (setUnion b a)
+
+-- (A u B) u C == A u (B u C)
+prop_setUnionAssociative :: Set Int -> Set Int -> Set Int -> Bool
+prop_setUnionAssociative a b c = setUnion (setUnion a b) c == setUnion a (setUnion b c)
+
+-- A u (B n C) == (A u B) n (A u C)
+prop_setUnionDistributive :: Set Int -> Set Int -> Set Int -> Bool 
+prop_setUnionDistributive a b c = setUnion a (setIntersect b c) == setIntersect (setUnion a b) (setUnion a c)
+
+-- A n B == B n A
+prop_setIntersectCommutative :: Set Int -> Set Int -> Bool
+prop_setIntersectCommutative a b = setEqual (setIntersect a b) (setIntersect b a)
+
+-- (A n B) n C == A n (B n C)
+prop_setIntersectAssociative :: Set Int -> Set Int -> Set Int -> Bool
+prop_setIntersectAssociative a b c = setIntersect (setIntersect a b) c == setIntersect a (setIntersect b c)
+
+-- A n (B u C) == (A n B) u (A n C)
+prop_setIntersectDistributive :: Set Int -> Set Int -> Set Int -> Bool
+prop_setIntersectDistributive a b c = setIntersect a (setUnion b c) == setUnion (setIntersect a b) (setIntersect a c)
+
+
+testSetOperators = do
+    print "Test union commutative property"
+    quickCheck prop_setUnionCommutative
+    print "Test union associative property"
+    quickCheck prop_setUnionAssociative
+    print "Test union distributive property"
+    quickCheck prop_setUnionDistributive
+    
+    print "Test intersection commutative property"
+    quickCheck prop_setIntersectCommutative
+    print "Test intersection associative property"
+    quickCheck prop_setIntersectAssociative
+    print "Test intersection distributive property"
+    quickCheck prop_setIntersectDistributive
 
 {-
  - Exercise 3
