@@ -394,6 +394,13 @@ prop_symClosLengthMin r = length (symClos r) >= length r
 prop_symClosLengthMax :: Rel Int -> Bool
 prop_symClosLengthMax r = length (symClos r) <= 2 * (length r)
 
+{-
+ - Function to check if a relation is Symmetric
+ -}
+isSym :: Rel Int -> Bool
+isSym r = and [(b, a) `elem` r | (a, b) <- r]
+
+
 testSymClos = do
     print "Testing symmetric closure length of R >= length of R"
     quickCheck prop_symClosLengthMin
@@ -413,6 +420,12 @@ prop_trClosLengthMin r = length (trClos r) >= length r
 
 prop_trClosLengthMax :: Rel Int -> Bool
 prop_trClosLengthMax r = length (trClos r) <= (length r) ^ 2
+
+{-
+ - Function to check if a relation is Transitive
+ -}
+isTr :: Rel Int -> Bool
+isTr r = and [(a,c) `elem` r | (a,b) <- r, (b,c) <- r]
 
 testTrClos = do
     print "Testing transitive closure length of R >= length of R"
