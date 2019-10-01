@@ -8,6 +8,7 @@ import Control.Monad
 import SetOrd
 import System.Random
 import Lecture3
+import Debug.Trace
 
 {-
  - testRunhelper helps print results
@@ -338,7 +339,7 @@ type Rel a = [(a,a)]
  - in every tuple in R, so (1,2) becomes (2,1). The below implementation does exactly this:
  - 1. map and 'swap' are used to create the converse relation of R
  - 2. a union is made of R with the converse relation
- - 3. the result is sorted to make the result ordered
+ - 3. the result is sorted
  -}
 symClos :: Ord a => Rel a -> Rel a
 symClos r = sort $ r `union` (swap <$> r) 
@@ -393,12 +394,56 @@ prop_symClosLengthMin r = length (symClos r) >= length r
 prop_symClosLengthMax :: Rel Int -> Bool
 prop_symClosLengthMax r = length (symClos r) <= 2 * (length r)
 
-
 testSymClos = do
     print "Testing symmetric closure length of R >= length of R"
     quickCheck prop_symClosLengthMin
     print "Testing symmetric closure length of R <= 2* length of R"
     quickCheck prop_symClosLengthMax
+
+{-
+ - While not as straightforward as the maximum size of an union, we can also use the upper and lower bound of the
+ - transitive closure in our quickCheck tests. 
+ - According to the paper "Distributed Algorithms for the Transitive Closure" (Eric Gribkoff, 2013) the upper
+ - bound of a transitive closure on a set with length l is l^2
+ - Again, we use >= and <= instead of > and < for the same reasons explained in the case of symClos.
+ -}
+
+prop_trClosLengthMin :: Rel Int -> Bool
+prop_trClosLengthMin r = length (trClos r) >= length r
+
+prop_trClosLengthMax :: Rel Int -> Bool
+prop_trClosLengthMax r = length (trClos r) <= (length r) ^ 2
+
+testTrClos = do
+    print "Testing transitive closure length of R >= length of R"
+    quickCheck prop_trClosLengthMin
+    print "Testing transitive closure length of R <= length of R ^ 2"
+    quickCheck prop_trClosLengthMax
+
+{-
+ - Both of these testing methods are not ideal. They only test if the output falls within certain bounds,
+ - without actually testing if the output conforms to a desired output. There are however still many
+ - cases in which these tests will correctly catch implementation errors. For example, a misimplemented
+ - version of trClos or symClos that recurses too much would likely produce a closure that is bigger than the
+ - maximum bound, therefore failing the test. Likewise, an implementation that recurses not enough due to an implementation
+ - error could produce outputs smaller than the bound size.
+ -}
+
+{- TODO: delete this? keep it?
+trClosCases = [
+    ([],                         []),
+    ([(0,1)],                    [(0,1)]),
+    ([(0,1), (1,2)],             [(0,1),(0,2),(1,2)]),
+    ([(0,1), (1,0)],             [(0,0),(0,1),(1,0),(1,1)]),
+    ([(0,1), (1,0), (1,2)],      [(0,0),(0,1),(0,2),(1,0),(1,1),(1,2)]),
+    ([(0,1), (1,2), (2,0)],      [(0,0),(0,1),(0,2),(1,0),(1,1),(1,2),(2,0),(2,1),(2,2)])
+    ]
+
+testTrClos = do
+    let numCases = length trClosCases
+    let numPass = length (filter (\v -> v) [trClos a == b | (a, b) <- trClosCases])
+    testRunHelper "trClos: known cases" numCases numPass
+-}
 
 {-
  - Exercise 7
