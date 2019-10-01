@@ -348,12 +348,35 @@ symClos r = sort $ r `union` (swap <$> r)
  - Exercise 4
  - Time: 20 min
  - Properties
-    (Precondition: reflexive) -> Serial (construction hint: transitive of symmetric is reflexive)
+    (Precondition: reflexive) -> Serial
 
+ - Question 3: The relation R = {(x,y) | x = y mod n} is serial for domain A if:
+    for all x in A, 0 <= x < n and (x,x) is in R <=>  R is reflexive for A
+    Reasoning:
+      since 0 <= (y mod n) < n and x = (y mod n), x cannot be the left hand side of the relation if x < 0 or x >= n
+      since y = x + k * n and y < n (else there must be z s.t. y = z mod n which is impossible), k = 0 and y = x
+    Since R should be reflexive we can test if reflexiveness leads to seriality.
 -}
 isSerial :: Eq a => [a] -> Rel a -> Bool
 isSerial dom rel = all (\x -> or [(x, y) `elem` rel | y <- dom]) dom
 
+isReflexive :: [Int] -> Rel Int -> Bool
+isReflexive dom rel = all (\x -> (x, x) `elem` rel) dom
+
+arbReflexive :: Int -> Gen ([Int], Rel Int)
+arbReflexive s = do
+    n <- choose (0, s)
+    l <- vectorOf n arbitrary
+    let dom = nub l
+    return (dom, zip dom dom)
+
+prop_reflexiveIsSerial :: [Int] -> Rel Int -> Property
+prop_reflexiveIsSerial dom rel = isReflexive dom rel ==> isSerial dom rel
+
+testIsSerial :: IO ()
+testIsSerial = do
+    print "Testing if reflexive relations are serial"
+    quickCheck $ forAll (arbReflexive 10) (uncurry prop_reflexiveIsSerial)
 
 {-
  - Exercise 5
