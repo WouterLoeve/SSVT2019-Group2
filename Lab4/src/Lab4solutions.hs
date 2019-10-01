@@ -391,7 +391,7 @@ prop_symClosLengthMin :: Rel Int -> Bool
 prop_symClosLengthMin r = length (symClos r) >= length r
 
 prop_symClosLengthMax :: Rel Int -> Bool
-prop_symClosLengthMax r = length (symClos r) <= 2 * (length r)
+prop_symClosLengthMax r = length (symClos r) <= 2 * length r
 
 {-
  - Function to check if a relation is Symmetric
@@ -406,6 +406,12 @@ prop_symClosIsSymRel :: Rel Int -> Bool
 prop_symClosIsSymRel r = isSymRel (symClos r)
 
 {-
+ - Property that symClos should do nothing to already symmetric sets
+ -}
+prop_symUnaffected :: Rel Int -> Property
+prop_symUnaffected r = isSymRel r ==> symClos r == r
+
+{-
  - Test function
  -}
 testSymClos = do
@@ -415,6 +421,8 @@ testSymClos = do
     quickCheck prop_symClosLengthMax
     print "Testing that output of symClos is symmetric"
     quickCheck prop_symClosIsSymRel
+    print "Testing that symmetric sets are unaffected by symClos"
+    quickCheckWith stdArgs { maxSize = 10 } prop_symUnaffected
 
 {-
  - While not as straightforward as the maximum size of an union, we can also use the upper and lower bound of the
@@ -451,7 +459,13 @@ prop_trClosIsTrRel r = isTrRel (trClos r)
  - trClos of the second set, to also be transitive.
  -}
 prop_trIntersection :: Rel Int -> Rel Int -> Property
-prop_trIntersection ra rb = isTrRel ra ==> isTrRel $ ra `intersect` (trClos rb)
+prop_trIntersection ra rb = isTrRel ra ==> isTrRel $ ra `intersect` trClos rb
+
+{-
+ - Property that trClos should do nothing to already transitive sets
+ -}
+prop_trUnaffected :: Rel Int -> Property
+prop_trUnaffected r = isTrRel r ==> trClos r == sort r
 
 {-
  - Test function
@@ -463,6 +477,8 @@ testTrClos = do
     quickCheck prop_trClosLengthMax
     print "Testing that output of trClos is transitive"
     quickCheck prop_trClosIsTrRel
+    print "Testing that transitive sets are unaffected by trClos"
+    quickCheckWith stdArgs { maxSize = 10 } prop_trUnaffected
 
     print "Testing intersection of transitive sets"
     quickCheckWith stdArgs { maxSize = 10 } prop_trIntersection
