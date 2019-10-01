@@ -35,7 +35,7 @@ randomSet x = do
     return $ list2set $ take x (randomRs (0, x) g :: [Int])
 
 {-
- - Generates random sets with lengths 1 to 10^8.
+ - Generates random sets with lengths 0 to 99.
 -}
 listRandomSetLin :: IO [Set Int]
 listRandomSetLin = mapM randomSet [0 .. 10^2-1]
@@ -51,8 +51,8 @@ testSetOwnGen = do
 
 
 {-
- - Tests a given property for a sets with random test
-    cases of the set of ints defined in SetOrd.
+ - Tests a given property for random test cases using the
+ - set of ints defined in SetOrd.
  - Prints appropriate test results.
 -}
 ownGenTestProp :: (SetOrd.Set Int -> Bool) -> String -> IO String
@@ -84,7 +84,7 @@ instance (Arbitrary a, Ord a) => Arbitrary (Set a) where
     arbitrary = sized arbSet
 
 {-
- - Tests the properties with the quickhcheck set generator.
+ - Tests the properties with the quickcheck set generator.
 -}
 testSetProp :: IO ()
 testSetProp = do
@@ -114,7 +114,7 @@ prop_setOrdered (Set a) = sort a == a
 {-
  - Exercise 2
  - We devised a bunch of properties based on the mathematical set properties and
-    used both the quickcheck generator as our own generator to test these.
+    used both the quickcheck generator and our own generator to test these.
  - We found that these properties cover a lot of behaviour even implementing combinations of the three functions,
  -}
 setUnion, setIntersect, setDifference :: Ord a => Set a -> Set a -> Set a
@@ -124,7 +124,7 @@ setUnion, setIntersect, setDifference :: Ord a => Set a -> Set a -> Set a
 setUnion      (Set xs) (Set ys) = list2set (xs ++ ys)
 
 {-
- - Takes the intersectino of two sets.
+ - Takes the intersection of two sets.
  -}
 setIntersect  (Set xs) (Set ys) = list2set (xs `intersect` ys)
 
@@ -328,7 +328,6 @@ testSetOperatorsOwnGen = do
 
 {-
  - Exercise 3
- - Time: 20 min
 -}
 type Rel a = [(a,a)]
 
@@ -345,9 +344,8 @@ symClos r = sort $ r `union` (swap <$> r)
 
 {-
  - Exercise 4
- - Time: 20 min
- - Properties
-    (Precondition: reflexive) -> Serial
+ - For this problem we defined a few generators to help us in our testing. 
+ - We first test our generators and then our defined properties.
 
  - Question 3: The relation R = {(x,y) | x = y mod n} is serial for domain A if:
     for all x in A, 0 <= x < n and (x,x) is in R <=>  R is reflexive for A
@@ -356,30 +354,88 @@ symClos r = sort $ r `union` (swap <$> r)
       since y = x + k * n and y < n (else there must be z s.t. y = z mod n which is impossible), k = 0 and y = x
     Since R should be reflexive we can test if reflexiveness leads to seriality.
 -}
+
+{-
+ - Check whether a relation is serial.
+ -}
 isSerial :: Eq a => [a] -> Rel a -> Bool
 isSerial dom rel = all (\x -> or [(x, y) `elem` rel | y <- dom]) dom
 
+{-
+ - Check whether a relation is reflexive
+ -}
 isReflexive :: [Int] -> Rel Int -> Bool
 isReflexive dom rel = all (\x -> (x, x) `elem` rel) dom
 
+{-
+ - Generates reflexive relations
+ -}
 arbReflexive :: Int -> Gen ([Int], Rel Int)
 arbReflexive s = do
     n <- choose (0, s)
-    l <- vectorOf n arbitrary
+    l <- vector n
     let dom = nub l
     return (dom, zip dom dom)
 
+{-
+ - Generates serial relations
+ -}
+arbSerial :: Int -> Gen ([Int], Rel Int)
+arbSerial s = do
+    n <- choose (0, s)
+    dom <- vector n
+    b <- vectorOf n $ elements dom
+    return (dom, zip dom b)
+
+{-
+ - Test whether generator actually gives serial relations because we use it later for other functions.
+ -}
+prop_testArbSerialGen :: [Int] -> Rel Int -> Bool
+prop_testArbSerialGen = isSerial
+
+{-
+ - Test whether generator actually gives serial relations because we use it later for other functions.
+ -}
+prop_testArbRefGen :: [Int] -> Rel Int -> Bool
+prop_testArbRefGen = isReflexive
+
+{-
+ - A reflexive function is always serial
+ -}
 prop_reflexiveIsSerial :: [Int] -> Rel Int -> Property
 prop_reflexiveIsSerial dom rel = isReflexive dom rel ==> isSerial dom rel
 
-testIsSerial :: IO ()
-testIsSerial = do
-    print "Testing if reflexive relations are serial"
-    quickCheck $ forAll (arbReflexive 10) (uncurry prop_reflexiveIsSerial)
+{-
+ - Testing if all first elements of the relations are in the domain
+ -}
+prop_serialDomainCoverage :: [Int] -> Rel Int -> Bool
+prop_serialDomainCoverage dom rel =  all (`elem` (fst <$> rel)) dom
 
 {-
+ - You could also build the following property.
+ - However we think that the above 2 provide more coverage 
+    (in a situation were we could give only 2 properties)
+ - Since the property is almost the same as checking that the relation is universal.
+ - Also the property only works when all relations are actually on the domain.
+ -}
+prop_serialDomainLength :: [Int] -> Rel Int -> Property
+prop_serialDomainLength dom rel = length dom * (length dom - 1) < length rel ==> isSerial dom rel
+
+testIsSerial :: IO ()
+testIsSerial = do
+    print "Testing if generator return serial relations"
+    quickCheck $ forAll (arbSerial 10) (uncurry prop_testArbSerialGen)
+
+    print "Testing if generator return reflexive relations"
+    quickCheck $ forAll (arbReflexive 10) (uncurry prop_testArbRefGen)
+
+    print "Testing if reflexive relations are serial"
+    quickCheck $ forAll (arbReflexive 10) (uncurry prop_reflexiveIsSerial)
+    
+    print "Testing if all first elements of the relations are in the domain"
+    quickCheck $ forAll (arbSerial 10) (uncurry prop_serialDomainCoverage)
+{-
  - Exercise 5
- - Time: 30 min
  - Compute the transitive closure by recursively taking the union with the 
     relation composition until a fixed point is reached.
 -}
@@ -395,7 +451,6 @@ trClos r = sort $ fix (\ f s -> if s == unComp s then s else f $ unComp s) r
 
 {-
  - Exercise 6
- - Time: 30 min
 -}
 
 {-
@@ -433,9 +488,10 @@ prop_symClosIsSymRel r = isSymRel (symClos r)
 
 {-
  - Property that symClos should do nothing to already symmetric sets
+ - Here we sort the given list so we can compare it with the output of the symmetric closure.
  -}
 prop_symUnaffected :: Rel Int -> Property
-prop_symUnaffected r = isSymRel r ==> symClos r == r
+prop_symUnaffected r = isSymRel r ==> symClos r == sort r
 
 {-
  - Test function
@@ -462,7 +518,7 @@ prop_trClosLengthMin :: Rel Int -> Bool
 prop_trClosLengthMin r = length (trClos r) >= length r
 
 prop_trClosLengthMax :: Rel Int -> Bool
-prop_trClosLengthMax r = length (trClos r) <= (length r) ^ 2
+prop_trClosLengthMax r = length (trClos r) <= length r ^ 2
 
 {-
  - Function to check if a relation is Transitive
@@ -488,7 +544,8 @@ prop_trIntersection :: Rel Int -> Rel Int -> Property
 prop_trIntersection ra rb = isTrRel ra ==> isTrRel $ ra `intersect` trClos rb
 
 {-
- - Property that trClos should do nothing to already transitive sets
+ - Property that trClos should do nothing to already transitive sets.
+ - We sort the given relation by the generator to give us the ability to compare.
  -}
 prop_trUnaffected :: Rel Int -> Property
 prop_trUnaffected r = isTrRel r ==> trClos r == sort r
@@ -510,15 +567,8 @@ testTrClos = do
     quickCheckWith stdArgs { maxSize = 10 } prop_trIntersection
 
 {-
- - Both of these testing methods are not ideal. They only test if the output falls within certain bounds,
- - without actually testing if the output conforms to a desired output. There are however still many
- - cases in which these tests will correctly catch implementation errors. For example, a misimplemented
- - version of trClos or symClos that recurses too much would likely produce a closure that is bigger than the
- - maximum bound, therefore failing the test. Likewise, an implementation that recurses not enough due to an implementation
- - error could produce outputs smaller than the bound size.
+ - We also do some small unit testing to check if our function works on known cases
  -}
-
-{- TODO: delete this? keep it?
 trClosCases = [
     ([],                         []),
     ([(0,1)],                    [(0,1)]),
@@ -528,11 +578,11 @@ trClosCases = [
     ([(0,1), (1,2), (2,0)],      [(0,0),(0,1),(0,2),(1,0),(1,1),(1,2),(2,0),(2,1),(2,2)])
     ]
 
-testTrClos = do
+testTrClos2 = do
     let numCases = length trClosCases
     let numPass = length (filter (\v -> v) [trClos a == b | (a, b) <- trClosCases])
-    testRunHelper "trClos: known cases" numCases numPass
--}
+    print $ testRunHelper "trClos: known cases" numCases numPass
+
 
 {-
  - Exercise 7
@@ -556,49 +606,132 @@ illustrateDiff = do
 
 {-
  - Exercise 8
- - Time:  min
+ - We could not finish everything.
  -}
 
 instance Show Expr where
     show (I num) = show num
-    show (V var) = show var
+    show (V var) = var
     show (Add expr1 expr2) = show expr1 ++ " + " ++ show expr2
     show (Subtr expr1 expr2) = show expr1 ++ " - " ++ show expr2
     show (Mult expr1 expr2) = show expr1 ++ " * " ++ show expr2
 
 instance Show Condition where
-    show (Prp var) = show var
+    show (Prp var) = var
     show (Eq expr1 expr2) = show expr1 ++ " == " ++ show expr2
     show (Lt expr1 expr2) = show expr1 ++ " < " ++ show expr2
     show (Gt expr1 expr2) = show expr1 ++ " > " ++ show expr2
     show (Ng cond) = "!(" ++ show cond ++ ")"
 
 instance Show Statement where
-    show (Ass var expr) = show var ++ " = " ++ show expr
+    show (Ass var expr) = var ++ " = " ++ show expr
     show (Cond cond stmt1 stmt2) = "if (" ++ show cond ++ ") then {" ++ show stmt1 ++ "} else {" ++ show stmt2 ++ "}"
+    show (Seq stmts) = intercalate "; " (show <$> stmts) ++ ";"
     show (While cond stmt) = "while (" ++ show cond ++ ") do {" ++ show stmt ++ "}"
 
--- instance Read Statement where
---     readsPrec _
+instance Read Expr where
+    readsPrec d r = readParen (d > app_prec)
+                    (\r -> [(I (read i), r') |
+                            (i, r') <- lex r,
+                            all isDigit i]) r
+                ++ readParen (d > app_prec)
+                    (\r -> [(V v, r') |
+                            (v, r') <- lex r,
+                            all isAlpha v]) r
+                ++ readParen (d > up_prec)
+                    (\r -> [(Add a b, r''') |
+                            (a, r') <- readsPrec (up_prec + 1) r,
+                            ("+", r'') <- lex r',
+                            (b, r''') <- readsPrec (up_prec + 1) r'']) r
+                ++ readParen (d > up_prec)
+                    (\r -> [(Subtr a b, r''') |
+                            (a, r') <- readsPrec (up_prec + 1) r,
+                            ("-", r'') <- lex r',
+                            (b, r''') <- readsPrec (up_prec + 1) r'']) r
+                ++ readParen (d > up_prec)
+                    (\r -> [(Mult a b, r''') |
+                            (a, r') <- readsPrec (up_prec + 1) r,
+                            ("*", r'') <- lex r',
+                            (b, r''') <- readsPrec (up_prec + 1) r'']) r
+                where app_prec = 10
+                      up_prec = 5
+
+
+instance Read Condition where
+    readsPrec d r = readParen (d > app_prec)
+                    (\r -> [(Prp v, r') |
+                            (v, r') <- lex r,
+                            all isAlpha v]) r
+                ++ readParen (d > up_prec)
+                    (\r -> [(Eq a b, r''') |
+                            (a, r') <- readsPrec (up_prec + 1) r,
+                            ("==", r'') <- lex r',
+                            (b, r''') <- readsPrec (up_prec + 1) r'']) r
+                ++ readParen (d > up_prec)
+                    (\r -> [(Lt a b, r''') |
+                            (a, r') <- readsPrec (up_prec + 1) r,
+                            ("<", r'') <- lex r',
+                            (b, r''') <- readsPrec (up_prec + 1) r'']) r
+                ++ readParen (d > up_prec)
+                    (\r -> [(Gt a b, r''') |
+                            (a, r') <- readsPrec (up_prec + 1) r,
+                            (">", r'') <- lex r',
+                            (b, r''') <- readsPrec (up_prec + 1) r'']) r
+                ++ readParen (d > neg_prec)
+                    (\r -> [(Ng c, r'''') |
+                            ("!", r') <- lex r,
+                            ("(", r'') <- lex r',
+                            (c, r''') <- readsPrec (neg_prec + 1) r'',
+                            (")", r'''') <- lex r''']) r
+                where app_prec = 10
+                      up_prec = 5
+                      neg_prec = 0
+
+instance Read Statement where
+    readsPrec d r = (\r -> [(Ass v e, r''') |
+                            (v, r') <- lex r,
+                            ("=", r'') <- lex r',
+                            (e, r''') <- reads r'']) r
+                ++ (\r -> [(Cond c a b, r12) |
+                            ("if", r1) <- lex r,
+                            ("(", r2) <- lex r1,
+                            (c, r3) <- reads r2,
+                            (")", r4) <- lex r3,
+                            ("then", r5) <- lex r4,
+                            ("{", r6) <- lex r5,
+                            (a, r7) <- reads r6,
+                            ("}", r8) <- lex r7,
+                            ("else", r9) <- lex r8,
+                            ("{", r10) <- lex r9,
+                            (b, r11) <- reads r10,
+                            ("}", r12) <- lex r11]) r
+                where app_prec = 10
+                      up_prec = 5
+                      neg_prec = 0
+
+
+
+
+
 {-
  - Exercise 9
- - Time:  min
  -}
-uk :: Double -> Double -> Double
-uk r k = (900 - (3 * k)) * (r**(k-1))
 
-target =  -600000000000 
-minimumNum = 0.000000000001
+digs :: Int -> [Int]
+digs 0 = []
+digs x = digs (x `div` 10) ++ [x `mod` 10]
 
-sn :: Double -> Double -> Double
-sn r n = sum [uk r k | k <- [1..n]]
--- sn r n = sum [uk r (fromIntegral k) | (k, x) <- zip [1..n] ([x**r | ])]
--- (product (1 :: Double) : replicate (n - 1) r)]
+getSquare :: Int -> Int
+getSquare n = sum (map (^2) (digs n))
 
+getChain :: Int -> Int
+getChain n = if n == 1 || n == 89 then n else getChain (getSquare n)
 
-euler235 :: Double -> Double -> Double
-euler235 low high | result < target = euler235 low mid
-            | result > target = euler235 mid high
-            | high - low >= minimumNum = mid
-    where mid = (high+low)/2
-          result = sn mid 5000
+{-
+ - While not the most elegant solution, we can calculate the number of chains that end in 89 by bruteforcing.
+ -}
+
+euler92 :: Int
+euler92 = length (filter (==89) [getChain x | x <- [1..10000000]])
+          
+          

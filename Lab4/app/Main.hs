@@ -6,7 +6,7 @@ import Lab4solutions
 
 main :: IO ()
 main = do
-    print $ euler235 0 2
+    -- print $ euler235 0 2
     print "Generator size is bounded but could still run for quite a while; we recommend building it instead of running it with the interactive mode."
     print "--Exercise 1--"
     testSetOwnGen
@@ -15,10 +15,16 @@ main = do
     testSetOperators
     testSetOperatorsOwnGen
     print "--Exercise (3 &) 4--"
-    -- testCNF
-    print "--Exercise 5--"
-    -- testSub
-    -- testNsub
+    testSetOperators
+    testSetOperatorsOwnGen
+    testIsSerial
     print "--Exercise 6--"
-    -- testClause
+    testSymClos
+    testTrClos
+    testTrClos2
+    print "--Exercise 7--"
+    print "(See implementation for reasoning)"
+    illustrateDiff
+    print "--Exercise 8--"
 
+    print "--Exercise 9--"
