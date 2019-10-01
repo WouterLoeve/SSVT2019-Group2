@@ -397,15 +397,25 @@ prop_symClosLengthMax r = length (symClos r) <= 2 * (length r)
 {-
  - Function to check if a relation is Symmetric
  -}
-isSym :: Rel Int -> Bool
-isSym r = and [(b, a) `elem` r | (a, b) <- r]
+isSymRel :: Rel Int -> Bool
+isSymRel r = and [(b, a) `elem` r | (a, b) <- r]
 
+{-
+ - Here we use the property that the output of symClos must be symmetric
+ -}
+prop_symClosIsSymRel :: Rel Int -> Bool
+prop_symClosIsSymRel r = isSymRel (symClos r)
 
+{-
+ - Test function
+ -}
 testSymClos = do
     print "Testing symmetric closure length of R >= length of R"
     quickCheck prop_symClosLengthMin
     print "Testing symmetric closure length of R <= 2* length of R"
     quickCheck prop_symClosLengthMax
+    print "Testing that output of symClos is symmetric"
+    quickCheck prop_symClosIsSymRel
 
 {-
  - While not as straightforward as the maximum size of an union, we can also use the upper and lower bound of the
@@ -424,14 +434,39 @@ prop_trClosLengthMax r = length (trClos r) <= (length r) ^ 2
 {-
  - Function to check if a relation is Transitive
  -}
-isTr :: Rel Int -> Bool
-isTr r = and [(a,c) `elem` r | (a,b) <- r, (b,c) <- r]
 
+isTrRel :: Rel Int -> Bool
+isTrRel r = and [(a,c) `elem` r | (a,b) <- r, (b',c) <- r, b' == b]
+
+{-
+ - Here we use the property that the output of trClos must be transitive
+ -}
+prop_trClosIsTrRel :: Rel Int -> Bool
+prop_trClosIsTrRel r = isTrRel (trClos r)
+
+{-
+ - Here we use the property that the intersection of two transitive sets must itself be transitive.
+ - If we would just pass two transitive tests, we would not be testing the trClos function.
+ - Therefore, we only input one set that has a precondition of being transitive, and one set without precondition.
+ - If our trClos function is correct, we would expect the intersection of the transitive set and the set produced by
+ - trClos of the second set, to also be transitive.
+ -}
+prop_trIntersection :: Rel Int -> Rel Int -> Property
+prop_trIntersection ra rb = isTrRel ra ==> isTrRel $ ra `intersect` (trClos rb)
+
+{-
+ - Test function
+ -}
 testTrClos = do
     print "Testing transitive closure length of R >= length of R"
     quickCheck prop_trClosLengthMin
     print "Testing transitive closure length of R <= length of R ^ 2"
     quickCheck prop_trClosLengthMax
+    print "Testing that output of trClos is transitive"
+    quickCheck prop_trClosIsTrRel
+
+    print "Testing intersection of transitive sets"
+    quickCheckWith stdArgs { maxSize = 10 } prop_trIntersection
 
 {-
  - Both of these testing methods are not ideal. They only test if the output falls within certain bounds,
