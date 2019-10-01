@@ -705,11 +705,65 @@ instance Read Statement where
                             ("{", r10) <- lex r9,
                             (b, r11) <- reads r10,
                             ("}", r12) <- lex r11]) r
+                -- ++ (\r -> [(Seq ss ++ [s], r) |
+                --             (ss, r1) <- reads r,
+                --             (";", r2) <- lex r1,
+                --             (b, r''') <- reads r'']) r
+                ++ (\r -> [(While c a, r7) |
+                            ("while", r1) <- lex r,
+                            ("(", r2) <- lex r1,
+                            (c, r3) <- reads r2,
+                            (")", r4) <- lex r3,
+                            ("do", r5) <- lex r4,
+                            ("{", r6) <- lex r5,
+                            (a, r7) <- reads r6,
+                            ("}", r8) <- lex r7]) r
                 where app_prec = 10
                       up_prec = 5
                       neg_prec = 0
 
+prop_exprI :: Expr -> Bool
+prop_exprI (I num) = read (show (I num)) == I num
 
+prop_exprV :: Expr -> Bool
+prop_exprV (V var) = read (show (V var)) == V var
+
+prop_exprAdd :: Expr -> Bool
+prop_exprAdd (Add expr1 expr2) = read (show (Add expr1 expr2)) == Add expr1 expr2
+
+prop_exprSubtr :: Expr -> Bool
+prop_exprSubtr (Subtr expr1 expr2) = read (show (Subtr expr1 expr2)) == Subtr expr1 expr2
+                                          
+prop_exprMult :: Expr -> Bool
+prop_exprMult (Mult expr1 expr2) = read (show (Mult expr1 expr2)) == Mult expr1 expr2
+
+prop_condPrp :: Condition -> Bool
+prop_condPrp (Prp var) = read (show (Prp var)) == Prp var
+
+prop_condEq :: Condition -> Bool
+prop_condEq (Eq expr1 expr2) = read (show (Eq expr1 expr2)) == Eq expr1 expr2
+
+prop_condLt :: Condition -> Bool
+prop_condLt (Lt expr1 expr2) = read (show (Lt expr1 expr2)) == Lt expr1 expr2
+
+prop_condGt :: Condition -> Bool
+prop_condGt (Gt expr1 expr2) = read (show (Gt expr1 expr2)) == Gt expr1 expr2
+
+prop_condNg :: Condition -> Bool
+prop_condNg (Ng expr) = read (show (Ng expr)) == Ng expr
+                           
+
+prop_stmtAssign :: Statement -> Bool
+prop_stmtAssign (Ass var expr) = read (show (Ass var expr)) == Ass var expr
+
+prop_stmtCond :: Statement -> Bool
+prop_stmtCond (Cond cond stmt1 stmt2) = read (show (Cond cond stmt1 stmt2)) == Cond cond stmt1 stmt2
+
+prop_stmtSeq :: Statement -> Bool
+prop_stmtSeq (Seq stmts) = read (show (Seq stmts)) == Seq stmts
+
+prop_stmtWhile :: Statement -> Bool
+prop_stmtWhile (While cond stmt) = read (show (While cond stmt)) == While cond stmt
 
 
 
