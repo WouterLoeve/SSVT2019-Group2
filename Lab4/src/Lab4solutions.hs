@@ -239,6 +239,33 @@ trClos r = sort $ fix (\ f s -> if s == s `union` (r @@ s) then s else f $ s `un
  - Time: 30 min
 -}
 
+{-
+ - Because the symmetric closure of a relation R is always the union of R and it's conver relation,
+ - we know the lower and upper size bound of the output of our symClos function.
+ - 
+ - The size of the output must always be greater or equal than the size of the input.
+ - Why equal? consider the example of an empty relation `Rel []` and an already symmetric relation
+ - such as `Rel [(1,2), (2,1)]`. Either example will not be changed by the function, and their output
+ - will therefore be of the same length as the input.
+ -
+ - The size of the output must always be smaller than or equal than the size of the input times two.
+ - Here, equal is included to handle cases such as `Rel [(1,2), (3,4)]` which will have output
+ - `Rel [(1,2), (3,4), (2,1), (4,3)]` which is exactly twice the size 
+ - (therefore satisfying the test 4 <= 2*2). The output length of symClos will be shorter if there are
+ - duplicates.
+ -}
+prop_symClosLengthMin :: Rel Int -> Bool
+prop_symClosLengthMin r = length (symClos r) >= length r
+
+prop_symClosLengthMax :: Rel Int -> Bool
+prop_symClosLengthMax r = length (symClos r) <= 2 * (length r)
+
+
+testSymClos = do
+    print "Testing symmetric closure length of R >= length of R"
+    quickCheck prop_symClosLengthMin
+    print "Testing symmetric closure length of R <= 2* length of R"
+    quickCheck prop_symClosLengthMax
 
 {-
  - Exercise 7
