@@ -6,7 +6,7 @@ import Test.QuickCheck
 import Control.Monad
 import SetOrd
 import System.Random
-import Lecture5
+import Lecture6
 import Debug.Trace
 
 {-
