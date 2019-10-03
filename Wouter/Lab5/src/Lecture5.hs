@@ -1,8 +1,8 @@
 
-module Lecture6
+module Lecture5
 
 where 
-
+import Lab5solutions
 import System.Random
 
 factorsNaive :: Integer -> [Integer]
@@ -110,8 +110,8 @@ coprimes = filter (uncurry coprime) pairs
 expM ::  Integer -> Integer -> Integer -> Integer
 expM x y = rem (x^y)
 
-exM :: Integer -> Integer -> Integer -> Integer
-exM = expM -- to be replaced by a fast version
+-- exM :: Integer -> Integer -> Integer -> Integer
+-- exM = expM -- to be replaced by a fast version
 
 primeTestF :: Integer -> IO Bool
 primeTestF n = do 
