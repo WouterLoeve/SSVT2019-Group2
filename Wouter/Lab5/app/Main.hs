@@ -5,4 +5,5 @@ import Lab5solutions
 import Benchmark
 
 main :: IO ()
-main = temp
+-- main = temp
+main = show_primeTests4
