@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 23ad54f621b3297be3e67c7eee0f3fb77cd8d99ba75ccbe14d6c36a984b55d1c
+-- hash: 5db4c58a350bf79c165d6609f9d26143514f8659d65cdff06136cd24dd48f9df
 
 name:           solutions-stack
 version:        0.1.0.0
@@ -27,10 +27,12 @@ source-repository head
 
 library
   exposed-modules:
+      Benchmark
       Lab1
       Lab2
-      Lab4solutions
+      Lab5solutions
       Lecture4
+      Lecture5
       SetOrd
   other-modules:
       Paths_solutions_stack
@@ -39,6 +41,8 @@ library
   build-depends:
       QuickCheck >=2.13.2 && <3
     , base >=4.7 && <5
+    , cond
+    , criterion
     , random
   default-language: Haskell2010
 
@@ -52,6 +56,8 @@ executable solutions-stack-exe
   build-depends:
       QuickCheck >=2.13.2 && <3
     , base >=4.7 && <5
+    , cond
+    , criterion
     , random
     , solutions-stack
   default-language: Haskell2010
@@ -67,6 +73,8 @@ test-suite solutions-stack-test
   build-depends:
       QuickCheck >=2.13.2 && <3
     , base >=4.7 && <5
+    , cond
+    , criterion
     , random
     , solutions-stack
   default-language: Haskell2010

@@ -23,6 +23,8 @@ dependencies:
 - base >= 4.7 && < 5
 - QuickCheck >= 2.13.2 && < 3
 - random
+- criterion
+- cond
 
 library:
   source-dirs: src
