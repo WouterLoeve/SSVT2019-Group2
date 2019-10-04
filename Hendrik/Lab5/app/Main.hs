@@ -6,4 +6,4 @@ import Lab5solutions
 
 main :: IO ()
 main = do
-    print ""
+    leastComposites
