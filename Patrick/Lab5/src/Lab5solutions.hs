@@ -20,7 +20,19 @@ testRunHelper testName numCases numPass = do
  - Exercise 1
  - Time: 0 min
 -}
-exM m e n = 0
+exM' :: Integer -> Integer -> Integer -> Integer
+exM' b e 1 = 0
+exM' b e m = exM'' (b `rem` m) e m 1
+
+exM'' :: Integer -> Integer -> Integer -> Integer -> Integer
+exM'' b 0 m r = r
+exM'' b e m r | e `rem` 2 == 1 = exM'' nb ne m ((r * b) `rem` m)
+              | otherwise      = exM'' nb ne m r
+              where nb = b*b
+                    ne = e `div` 2
+    
+
+
 {-
  - Exercise 2
  - Time: 0 min
