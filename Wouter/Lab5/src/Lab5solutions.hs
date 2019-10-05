@@ -136,24 +136,70 @@ testTrees = do
 
 {-
  - Exercise 7
- - Time: 30 min
+ - Time: 200 min
+ - Source: https://en.wikipedia.org/wiki/RSA_(cryptosystem)
 -}
-sameBitLength a b = (ceiling $ logBase 2 a) == (ceiling $ logBase 2 b)
-
--- rsaPrime = 
+sameBitLength :: Integer -> Integer -> Bool
+sameBitLength a b = ceiling (logBase 2 (fromIntegral a)) == ceiling (logBase 2 (fromIntegral b))
 
 genRandomInt :: IO Integer
 genRandomInt = do
-    g <- newStdGen
-    return $ (random g :: Integer)
+    r <- randomRIO (2^256, 2^256-1)
+    return $ abs r
 
--- rsaPrime' = head $ filterM (\ x y -> mrComposite x 100 && mrComposite y 100)
---             [(p, q) | p <- genRandomInt, q <- genRandomInt]
-rsaPrime' ::  IO ([Integer], [Integer])
-rsaPrime' = do
-        p <- genRandomInt
-        q <- genRandomInt
-        Control.Monad.when (mrComposite p 100 && mrComposite q 100)
+rsaPrime :: IO (Integer, Integer)
+rsaPrime = do
+        p <- getRsaPrime
+        q <- getRsaPrime
+        if sameBitLength p q then
             return (p, q)
-        rsaPrime'
-        
+        else
+            rsaPrime
+
+-- PrimeMR function is really slow for large primes, even on low k's. How do we fix?
+getRsaPrime :: IO Integer
+getRsaPrime = do
+    p <- genRandomInt
+    if even p then
+        getRsaPrime
+    else do
+        pPrime <- primeMR 40 p
+        if pPrime then
+            return p
+        else
+            getRsaPrime
+
+genRSAencrypt :: Integer -> IO Integer
+genRSAencrypt tot = do
+    e <- randomRIO (1, tot)
+    if gcd e tot == 1 then
+        return e
+    else
+        genRSAencrypt tot
+
+-- IIRC b is the smallest so its the value of d.
+genRSAdecrypt :: Integer -> Integer -> IO Integer
+genRSAdecrypt e tot = do
+    d <- randomRIO (1, tot)
+    let (_, b) = fctGcd (e) tot
+    return b
+
+genRSAKeys :: IO (Integer, Integer, Integer)
+genRSAKeys = do
+    (p, q) <- rsaPrime
+    let n = p * q
+    let tot = lcm (p-1) (q-1)
+    e <- genRSAencrypt tot
+    d <- genRSAdecrypt e tot
+
+    return (e, d, n)
+    
+rsaEncodeM :: IO (Integer,Integer) -> Integer -> IO Integer
+rsaEncodeM keys m = do
+    (e, n) <- keys
+    return $ rsaEncode (e, n) m
+
+rsaDecodeM :: IO (Integer,Integer) -> Integer -> IO Integer
+rsaDecodeM keys m = do
+    (d, n) <- keys
+    return $ rsaDecode (d, n) m
