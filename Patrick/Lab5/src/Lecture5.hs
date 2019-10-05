@@ -1,5 +1,5 @@
 
-module Lecture6
+module Lecture5
 
 where 
 
@@ -143,8 +143,8 @@ primeMR k n = do
     if exM a (n-1) n /= 1 || mrComposite a n
     then return False else primeMR (k-1) n
 
-composites :: [Integer]
-composites = error "not yet implemented"
+-- composites :: [Integer]
+-- composites = error "not yet implemented"
 
 encodeDH :: Integer -> Integer -> Integer -> Integer
 encodeDH p k m = m*k `mod` p
