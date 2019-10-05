@@ -84,6 +84,7 @@ composites = filter (not . prime) [4..]
 leastComposite :: Int -> [Integer] -> IO Integer
 leastComposite k = fix (\f (x:xs) -> do b <- primeTestsF k x; if b then return x else f xs)
 
+-- https://rosettacode.org/wiki/Averages/Mode#Haskell
 mode :: (Ord a) => [a] -> [a]
 mode xs = map fst $ filter ((==best).snd) counts
     where counts = map (\l -> (head l, length l)) . group . sort $ xs
@@ -103,7 +104,7 @@ leastComposites = do
     print "Modal least composites for ks = [1, 2, 3, 5, 7] for trials n = 10"
     print =<< modalComposites [1, 2, 3, 5, 7] 10 composites
 
-{- E5
+{- E4
  - Fermat's little theorem states a^(p-1) mod p = 1 for any prime p and integer a not divisible by p.
  - Carmichael numbers are numbers for which this is true for any a coprime to them.
  - Thus a carmichael number will fool the Fermat primality test if only coprime a's are picked.
@@ -114,8 +115,7 @@ leastComposites = do
  - The formula for this is ((ncoprimes n) / (n - 2))^k.
  - The base pass rate (k=1) of the first carmichael number 294409 is ~0.95%.
  - Thus we expect ~(0.95^k)% of least composites to be the first carmichael number.
- -  TODO: We can use this to test the Fermat primality test function.
- -        Hint: use Chi-square again to test conformity.
+ -  TODO: We can use this to test the Fermat primality test function. Use binomial test for that.
  - In fact, we expect the first number to be most common until around k=14, since 0.95^k > 0.5 for 0 < k < 14.
 -}
 carmichael :: [Integer]
@@ -141,9 +141,56 @@ leastComposites' = do
     leastComposite1 <- leastComposite 1 carmichael
     leastComposite2 <- leastComposite 2 carmichael
     leastComposite3 <- leastComposite 3 carmichael
-    print $ "Least composite for k = 1 is " ++ show leastComposite1
-    print $ "Least composite for k = 2 is " ++ show leastComposite2
-    print $ "Least composite for k = 3 is " ++ show leastComposite3
+    print $ "Least composite carmichael number for k = 1 is " ++ show leastComposite1
+    print $ "Least composite carmichael number for k = 2 is " ++ show leastComposite2
+    print $ "Least composite carmichael number for k = 3 is " ++ show leastComposite3
     print "Modal least composites for ks = [1, 2, 3, 5, 7] for trials n = 10"
     print =<< modalComposites [1, 2, 3, 5, 7] 10 carmichael
+    -- I have not yet been able to run this part, dunno if there's an error?
+    let leastComposite' k = fix (\f (x:xs) -> do b <- primeMR k x; if b then return x else f xs)
+    leastComposite1' <- leastComposite' 1 carmichael
+    leastComposite2' <- leastComposite' 2 carmichael
+    leastComposite3' <- leastComposite' 3 carmichael
+    print $ "Least composite carmichael number for MR test with k = 1 is " ++ show leastComposite1'
+    print $ "Least composite carmichael number for MR test with k = 2 is " ++ show leastComposite2'
+    print $ "Least composite carmichael number for MR test with k = 3 is " ++ show leastComposite3'
+    
 
+{- E5
+ - Mersenne primes are primes of the form 2^n - 1.
+ - The generated numbers are of this form by definition, so we only have to check primality.
+ - TODO: do statistics.
+ -  Q: how to deal with runtime? Can we only check primality statistics for the first n number?
+-}
+mrMPrimes :: Int -> [Integer] -> IO [Integer]
+mrMPrimes 0 _ = return []
+mrMPrimes n (p:ps) = do
+    let mp = 2^p - 1
+    b <- primeMR 1 mp
+    if b then
+        (mp :) <$> mrMPrimes (n - 1) ps
+    else
+        mrMPrimes n ps
+
+someMRMPrimes :: IO ()
+someMRMPrimes = do
+    print "First 7 Mersenne primes obtained:"
+    mprimes <- mrMPrimes 7 Lecture6.primes
+    print mprimes
+    print "Fake primes:"
+    print $ filter (not . prime) mprimes
+
+{- E6
+ - TODO: proofs
+ - Test coprimeness on both.
+ - Q: can we test completeness?
+ -  A: Just collect the trees and compare to the specification?
+-}
+tree1 n = grow (step1 n) (1,1)
+step1 n = \ (x,y) -> if x+y <= n then [(x+y,x),(x,x+y)] else [] -- step function
+
+tree2 n = grow (step2 n) (1,1)
+step2 n = \ (x,y) -> if x+y <= n then [(x+y,y),(x,x+y)] else [] -- step function
+
+{- E7
+-}
