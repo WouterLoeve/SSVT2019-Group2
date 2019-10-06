@@ -31,19 +31,19 @@ power a b c = a^b `mod` c
 {-
  - Checks if the answer corresponds to the normal power function x^y `mod` n
 -}
-prop_checkPower :: [Integer] -> Bool
-prop_checkPower [a, b, c] = exM a b c == power a b c
+-- prop_checkPower :: [Integer] -> Bool
+-- prop_checkPower [a, b, c] = exM a b c == power a b c
 
-{-
- - Check whether the end result is actually smaller than the modulus
--}
-prop_checkPowerMod :: [Integer] -> Bool
-prop_checkPowerMod [a, b, c] = exM a b c < c
+-- {-
+--  - Check whether the end result is actually smaller than the modulus
+-- -}
+-- prop_checkPowerMod :: [Integer] -> Bool
+-- prop_checkPowerMod [a, b, c] = exM a b c < c
 
-genPositiveIntegers :: Gen Integer
-genPositiveIntegers = abs <$> (arbitrary :: Gen Integer) `suchThat` (> 0)
+-- genPositiveIntegers :: Gen Integer
+-- genPositiveIntegers = abs <$> (arbitrary :: Gen Integer) `suchThat` (> 0)
 
-testExm :: IO ()
-testExm = do
-    quickCheck $ forAll (vectorOf 3 genPositiveIntegers) prop_checkPower
-    quickCheck $ forAll (vectorOf 3 genPositiveIntegers) prop_checkPowerMod
+-- testExm :: IO ()
+-- testExm = do
+--     quickCheck $ forAll (vectorOf 3 genPositiveIntegers) prop_checkPower
+--     quickCheck $ forAll (vectorOf 3 genPositiveIntegers) prop_checkPowerMod
