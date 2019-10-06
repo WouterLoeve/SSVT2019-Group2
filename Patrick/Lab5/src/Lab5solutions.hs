@@ -7,6 +7,10 @@ import Control.Monad
 import System.Random
 import Lecture5
 import Debug.Trace
+import Text.Printf
+import Control.Exception
+import System.CPUTime
+
 
 {-
  - testRunhelper helps print results
@@ -30,7 +34,24 @@ exM'' b e m r | e `rem` 2 == 1 = exM'' nb ne m ((r * b) `rem` m)
               | otherwise      = exM'' nb ne m r
               where nb = b*b
                     ne = e `div` 2
-    
+
+{-
+ - Timing function: https://wiki.haskell.org/Timing_computations
+ -}
+
+time :: IO t -> IO Double
+time a = do
+    start <- getCPUTime
+    v <- a
+    end   <- getCPUTime
+    let diff = (fromIntegral (end - start)) / (fromIntegral 10^12)
+    return diff
+
+test_exMPerformance = do
+    print "Testing slow version"
+    time (exM 12879721238 11223987 49 `seq` return ()) >>= (\d -> printf "Computation time: %0.3f sec\n" (d :: Double))
+    print "Testing fast version"
+    time (exM' 12879721238 11223987 49 `seq` return ()) >>= (\d -> printf "Computation time: %0.3f sec\n" (d :: Double))
 
 
 {-
@@ -48,11 +69,12 @@ exM'' b e m r | e `rem` 2 == 1 = exM'' nb ne m ((r * b) `rem` m)
 composites :: [Integer]
 composites = filter (\n -> not (prime n)) [2..]
 
+--TODO: test somehow?
+
 {-
  - Exercise 3
  - Time: 0 min
  -}
-
 
 recursivePrimeTestF :: Int -> [Integer] -> IO Integer
 recursivePrimeTestF k (v:vs) = do
@@ -62,12 +84,20 @@ recursivePrimeTestF k (v:vs) = do
     
 test_compositePrimeTestF = do
     print "composite prime test K=1"
-    recursivePrimeTestF 1 composites
+    recursivePrimeTestF 1 composites >>= print
     print "composite prime test K=2"
-    recursivePrimeTestF 2 composites
+    recursivePrimeTestF 2 composites >>= print
     print "composite prime test K=3"
-    recursivePrimeTestF 3 composites
+    recursivePrimeTestF 3 composites >>= print
 
+{-
+ - K=1 smallest found = 9
+ - K=2 smallest found = 9
+ - K=3 smallest found = 15
+ -
+ - A higher K influences the results to be higher. This is clear from the fact that testing with K=3
+ - yields (often significantly) higher numbers than K=1 or K=2.
+ -}
 
 {-
  - Exercise 4
@@ -91,9 +121,16 @@ test_carmichaelPrimeTestF = do
     recursivePrimeTestF 3 carmichael >>= print
 
 {-
+ - None of the numbers in carmicheal pass the miller-rabin test?
+ -}
+
+
+{-
  - Exercise 5
  - Time: 0 min
 -}
 
+isMillerRabin :: Integer -> Bool
+isMillerRabin n = prime n && prime (2^n - 1)
 millerRabin = [2^p -1 | p <- primes, prime (2^p -1)]
 
