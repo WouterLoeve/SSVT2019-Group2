@@ -23,9 +23,32 @@ testRunHelper testName numCases numPass = do
 {-
  - Exercise 2
  - Time: 120 min
+ - A way of testing infinite lists is mentioned in the QuickCheck paper:
+    https://www.cs.tufts.edu/~nr/cs257/archive/john-hughes/quick.pdf
+ - It says that two infinite lists are equal if all finite initial segments are equal.
+ - This is not always the case, you can program in logic which makes the list stop working after a certain number
+ - For example in a list comprehension, use an extra conditional to say that the number should be lower than some arbitrary number.
+ - If that happens this way of testing doesn't work.
+ - We can however, find some errors in the function looking at a initial finite part.
+ - 
+
 -}
 composites :: [Integer]
 composites = [x * y | x <- [2..], y <- [2..x]]
+
+{-
+ - Tests whether the number of factors for the first n composites is higher than 0.
+ - A factor of 0 means that the number is a prime 
+    since factors does not report the trivial case of 1 and itself as a factor and
+    a number is prime if it is only divisble by itself and 1, which are both not reported.
+ - Since the absence of these reports we can assume that the number is prime if it does not have factors.
+-}
+prop_compFactor :: Integer -> Bool
+prop_compFactor n = all (not . null . factors)  (take (fromIntegral n) composites) 
+
+testComposites :: IO ()
+testComposites = do
+    verboseCheck $ forAll genPositiveIntegers prop_compFactor
 
 {-
  - Exercise 3
@@ -47,6 +70,19 @@ show_primeTests3 = do
     print "K = 5"
     test_primeTestsF 5 composites >>= putStrLn
 
+
+genPrime :: Gen Integer
+genPrime = do
+    index <- arbitrary `suchThat` (>10) 
+    return $ primes !! index
+
+-- prop_primetest :: IO 
+-- prop_primetest = primeTestsF 40
+
+-- testFermat :: IO ()
+-- testFermat = do
+--     verboseCheck $ forAll genPrime prop_primetest
+
 {-
  - Found:
  - k = 1 -> 28, 33, 35  
@@ -54,10 +90,13 @@ show_primeTests3 = do
  - k = 3 -> 217, 561
  - k = 4 -> 703, 2465
  - k = 5 -> 561
-
+ - k is the number of rounds used in the check. 
+ - Increasing k will generally lead to the lower numbers 
+    not fooling the test meaning that the minimum number 
+    should go up when you increase k. 
+ - This is not always the case since it remains a probabalistic function.
 -}
 
--- test_primeTestF' :: Int -> [Integer] -> [Integer] -> [Integer]
 test_primeTestF' :: Int -> [Integer] -> IO Integer
 test_primeTestF' k [] = return (-1)
 test_primeTestF' k (x:xs) = do
