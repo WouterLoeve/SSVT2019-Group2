@@ -127,7 +127,7 @@ testComposites = do
  -
  - TODO: Generate/search primes and test whether they go through the primality test
  - We can check how many tests the prime correctly passes, and state with a certain confidence if the test works.
- - Basically a prime is correctly identified if 100% if of a's return true.
+ - Basically a prime is correctly identified if 100% of a's return true.
  - Thus the chance of the function being correct given k different a's is: 1 - (1 - 1/(p - 2))^k (?)
 -}
 leastComposite :: Int -> [Integer] -> IO Integer
