@@ -19,10 +19,13 @@ main = do
     print "--Exercise 2--"
     testComposites
     print "--Exercise 3--"
-    leastComposites
+    -- leastComposites
     print "--Exercise 4--"
-    leastComposites'
+    -- leastComposites'
     print "--Exercise 5--"
-    someMPrimes
+    -- someMPrimes 8
     
     print "--Exercise 6--"
+
+    print "--Exercise 7--"
+    rsaTestMult 10 1024
