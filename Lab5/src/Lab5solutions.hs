@@ -10,6 +10,7 @@ import SetOrd
 import System.Random
 import Lecture5 hiding (composites)
 import Debug.Trace
+import Benchmark
 
 {-
  - testRunhelper helps print results
@@ -25,18 +26,20 @@ testRunHelper testName numCases numPass = do
  - Exercise 1
  - We should check if the result is the same as the straightforward implementation.
  -  Q: How do we do this for _very_ large values (since expM takes a long time for large values)?
- -      A:
+ -      A: One possibility is to generate a large list of known values beforehand, and unit-test these cases.
+ -      This would still require a large amount of computation, but only once because these results can be reused.
  - We should check if it is more efficient.
  -  Q: Can we time it? Should we use a benchmarking library (e.g. Criterion)?
  -      A: Yes, see Benchmark.hs
  -      Q: Can we benchmark for random numbers?
- -          A:
+ -          A: Yes, we have used Criterion to benchmark our functions, which can be used with quickCheck
  -  Q: Can we prove efficiency? Can we estimate the complexity in bits?
  -      A:
  - Can we check anything else?
  - WHEN is it faster? Can we reason about this?
- -  A:
- - Our function is limited by the recursion limit.
+ -      A: The exM function is only faster for large numbers. On low numbers, the overhead for recursion becomes
+ -      higher than the naive implementation. This
+ -      Our function is limited by the recursion limit.
 -}
 
 {-
@@ -55,14 +58,37 @@ prop_checkPower [a, b, c] = exM a b c == expM a b c
 prop_checkPowerMod :: [Integer] -> Bool
 prop_checkPowerMod [a, b, c] = exM a b c < c
 
+{-
+ - Test data generator
+ -}
 genPositiveIntegers :: Gen Integer
 genPositiveIntegers = abs <$> (arbitrary :: Gen Integer) `suchThat` (> 0)
 
+{-
+ - Test Exm implementation
+ -}
 testExm :: IO ()
 testExm = do
     print "Testing whether our fast version yields the same output as expM"
     quickCheck $ forAll (vectorOf 3 genPositiveIntegers) prop_checkPower
     quickCheck $ forAll (vectorOf 3 genPositiveIntegers) prop_checkPowerMod
+
+{-
+ - Benchmark Exm implementation
+ -}
+benchExmPerf :: IO ()
+benchExmPerf = do
+    print "Benchmarking for known cases: small numbers"
+    small
+    print "Benchmarking for known cases: large numbers"
+    large
+    print "Benchmarking for known cases: largest numbers"
+    largest
+    print "Benchmarking for random cases"
+
+
+
+
 
 {-
  - Exercise 2
@@ -74,7 +100,6 @@ https://www.cs.tufts.edu/~nr/cs257/archive/john-hughes/quick.pdf
  - For example in a list comprehension, use an extra conditional to say that the number should be lower than some arbitrary number.
  - If that happens this way of testing doesn't work.
  - We can however, find some errors in the function looking at a initial finite part.
- -
  -}
 
 {-
@@ -262,13 +287,26 @@ probableMPrimes n (p:ps) = do
 
 mersprimes = [mers x | x <- [1..25]]
 
-someMPrimes :: IO ()
-someMPrimes = do
-    print "First 7 Mersenne primes obtained:"
-    mprimes <- probableMPrimes 25 primes
+someMPrimes :: Int -> IO ()
+someMPrimes x = do
+    print $ "First " ++ show x ++  " Mersenne primes obtained:"
+    mprimes <- probableMPrimes x primes
     print mprimes
     print "Fake primes:"
     print $ filter (not . (`elem` mersprimes)) mprimes
+    -- ((primeMR 40) <$> mprimes) >>= print
+    -- filterFalsePri9mes <$> mprimes
+    -- print $ filterM ((liftM not) primeMR 40) mprimes
+
+    -- primeMR 40 mprimes >>= print $ filter(not . prime)
+    print =<< filterM ((not <$>) . primeMR 40) mprimes
+
+filterFalsePrimes :: Integer -> IO ()
+filterFalsePrimes xs = do
+    isPrime <- (primeMR 40) xs
+    -- isPrime >>= print
+    print isPrime
+
 
 {-
 - X TODO: use implementation to find a few mersenne primes?
@@ -308,80 +346,110 @@ testTrees = do
     quickCheck $ forAll genPositiveIntegers (prop_CoPrimeTree tree2)
 
 {-
-    - Exercise 7
-    - Time: 200 min
-    - Source: https://en.wikipedia.org/wiki/RSA_(cryptosystem)
+ - Exercise 7
+ - Time: 200 min
+ - Source: https://en.wikipedia.org/wiki/RSA_(cryptosystem)
 -}
+{-
+ - Check whether two primes are of the same bitlength
+ -}
 sameBitLength :: Integer -> Integer -> Bool
-sameBitLength a b = ceiling (logBase 2 (fromIntegral a)) == ceiling (logBase 2 (fromIntegral b))
+sameBitLength a b = getBitLength a == getBitLength b
 
-genRandomInt :: IO Integer
-genRandomInt = do
-    r <- randomRIO (2^64, 2^65-1)
+{-
+ - Calculates the assumed length in bits (could be implementation specific)
+ -}
+getBitLength :: Integer -> Integer
+getBitLength a = ceiling (logBase 2 (fromIntegral a))
+
+{-
+ - Calculates a random positive Integer within the range (a, b)
+ -}
+genRandomInt :: Integer -> Integer -> IO Integer
+genRandomInt a b = do
+    r <- randomRIO (a, b)
     return $ abs r
 
-rsaPrime :: IO (Integer, Integer)
-rsaPrime = do
-        p <- getRsaPrime
-        q <- getRsaPrime
+{-
+ - Generates a prime that can be used in RSA based on an already generated prime p.
+ - This function takes the suposed length of prime p into account when generating this second prime.
+ -}
+rsaPrime :: Integer -> IO (Integer, Integer)
+rsaPrime p = do
+        let len = (getBitLength p) - 1
+        q <- getRsaPrime (2^len) (2^(len+1)-1)
         if sameBitLength p q then
             return (p, q)
         else
-            rsaPrime
+            rsaPrime p
 
--- PrimeMR function is really slow for large primes, even on low k's. How do we fix?
-getRsaPrime :: IO Integer
-getRsaPrime = do
-    p <- genRandomInt
+{-
+ - Generates a random RSA prime.
+ - As an optimisation, if the number is even, it's not a prime so we throw it away and try again recursively.
+ - We use the miller rabin test for 40 rounds to test whether this number is prime.
+ - This number 40 comes from https://stackoverflow.com/questions/6325576/how-many-iterations-of-rabin-miller-should-i-use-for-cryptographic-safe-primes
+ - Which calculates the number of rounds necessary to get to a safe confidence level that the number you have generated is actually a prime.
+ -}
+getRsaPrime :: Integer -> Integer -> IO Integer
+getRsaPrime a b = do
+    p <- genRandomInt a b
     if even p then
-        getRsaPrime
+        getRsaPrime a b
     else do
         pPrime <- primeMR 40 p
         if pPrime then
             return p
         else
-            getRsaPrime
+            getRsaPrime a b
 
-genRSAKeys :: IO (Integer, Integer, Integer)
-genRSAKeys = do
-    (p, q) <- rsaPrime
-    let n = p * q
-    let tot = lcm (p-1) (q-1)
-    e <- genRSAencrypt tot
-    let d = genRSAdecrypt e tot
+{-
+ - Generates two primes, the necessary keys and tests some properties of the RSA process.
+ -}
+rsaTest :: Integer -> IO ()
+rsaTest bits = do
+    p <- getRsaPrime 2 (2^bits)
+    (p, q) <- rsaPrime p
+    let (e, n) = rsaPublic p q
+    let (d, n) = rsaPrivate p q
+    let n = p*q
+    print p
+    print q
+    -- quickCheck (\v -> prop_encIsDecrypt v e d n)
+    -- quickCheck (\v -> prop_encDoesSomething v e d n)
+    print $ prop_encDoesSomething 5 e d n
+    -- quickCheck (\v -> prop_decDoesSomething v e d n)
+    -- quickCheck prop_isPrime
 
-    return (e, d, n)
+{-
+ - Encoding and decoding in succession should yield the original message.
+ -}
+prop_encIsDecrypt :: Integer -> Integer -> Integer -> Integer -> Bool
+prop_encIsDecrypt val e d n = val == rsaDecode (d, n) (rsaEncode (e, n) val)
 
-genRSAencrypt :: Integer -> IO Integer
-genRSAencrypt tot = do
-    e <- randomRIO (1, tot)
-    if gcd e tot == 1 then
-        return e
-    else
-        genRSAencrypt tot
+{-
+ - Checks whether encode actually changes the value.
+ - There is a tiny chance that this property doesn't work as the encoding function for a
+ - specific message might yield the same value as the original message.
+ - This is usefull to test because an empty encrypt function followed by an empty decrypt
+ - function would satisfy the prop_encIsDecrypt property.
+ -}
+prop_encDoesSomething :: Integer -> Integer -> Integer -> Integer -> Integer
+prop_encDoesSomething val e d n = enc
+    where enc = rsaEncode(e, n) val
 
--- IIRC b is the smallest so its the value of d.
-genRSAdecrypt :: Integer -> Integer -> Integer
-genRSAdecrypt e tot = max a b
-        where (a, b) = fctGcd (e) tot
--- Test whether it is actually the multiplicative inverse
+prop_decDoesSomething :: Integer -> Integer -> Integer -> Integer -> Bool
+prop_decDoesSomething val e d n = dec /= val
+    where dec = rsaDecode(d, n) val
 
-rsaEncodeM :: IO (Integer,Integer) -> Integer -> IO Integer
-rsaEncodeM keys m = do
-    (e, n) <- keys
-    return $ rsaEncode (e, n) m
+prop_isPrime = primeMR 100
 
-rsaDecodeM :: IO (Integer,Integer) -> Integer -> IO Integer
-rsaDecodeM keys m = do
-    (d, n) <- keys
-    return $ rsaDecode (d, n) m
-
-rsaTest val = do
-   (e, d, n) <- genRSAKeys
-   let encrypted = rsaEncode (e, n) val
-   let decrypted = rsaDecode (d, n) encrypted
-   print encrypted
-   print decrypted
-   print val
-   print $ decrypted == val
-   print $ show decrypted == show val
+{-
+ - Tests the rsaTest function by calling it an x amount of times.
+ - Ensures that we also use different keys for testing.
+ - Also takes the number of bits used in computation.
+ -}
+rsaTestMult :: (Eq t, Num t) => t -> Integer -> IO ()
+rsaTestMult 0 bits = print "Done"
+rsaTestMult x bits = do
+    rsaTest bits
+    rsaTestMult (x-1) bits
