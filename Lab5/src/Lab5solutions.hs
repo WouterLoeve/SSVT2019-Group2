@@ -367,13 +367,26 @@ rsaTest bits = do
     let (d, n) = rsaPrivate p q
     let n = p*q
     quickCheck (\v -> prop_encIsDecrypt v e d n)
-    --    quickCheck prop_isPrime
+    -- quickCheck prop_isPrime
 
 {-
  - Encoding and decoding in succession should yield the original message.
  -}
 prop_encIsDecrypt :: Integer -> Integer -> Integer -> Integer -> Bool
 prop_encIsDecrypt val e d n = val == rsaDecode (d, n) (rsaEncode (e, n) val)
+
+prop_encDoesSomething :: Integer -> Integer -> Integer -> Integer -> Bool
+prop_encDoesSomething val e d n = enc /= val
+    where enc = rsaEncode(e, n) val
+
+{-
+ - Checks whether encode actually changes the value. 
+ - There is a tiny chance that this property doesn't work as the encoding function for a 
+ - specific message might yield the same value as the original message.
+ -}
+-- prop_encDoesSomething :: Integer -> Integer -> Integer -> Integer -> Property
+-- prop_encDoesSomething val e d n = enc != val
+--     where enc = rsaEncode(e, n) val
 
 prop_isPrime = primeMR 100
 
