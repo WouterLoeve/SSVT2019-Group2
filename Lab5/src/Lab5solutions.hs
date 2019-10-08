@@ -268,7 +268,7 @@ mersprimes = [mers x | x <- [1..25]]
 
 someMPrimes :: Int -> IO ()
 someMPrimes x = do
-    print ("First " ++ show x ++  " Mersenne primes obtained:")
+    print $ "First " ++ show x ++  " Mersenne primes obtained:"
     mprimes <- probableMPrimes x primes
     print mprimes
     print "Fake primes:"
@@ -278,7 +278,7 @@ someMPrimes x = do
     -- print $ filterM ((liftM not) primeMR 40) mprimes
 
     -- primeMR 40 mprimes >>= print $ filter(not . prime)
-    -- print $ filterM ((not .) <$> (primeMR 40)) mprimes
+    print =<< filterM ((not <$>) . primeMR 40) mprimes
 
 filterFalsePrimes :: Integer -> IO ()
 filterFalsePrimes xs = do
