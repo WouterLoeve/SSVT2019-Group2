@@ -6,18 +6,11 @@ import Lecture5
 import Benchmark
 
 main :: IO ()
--- main =  (primeMR 1 (2^128)) >>= print
 main = do
+    print "Please run this compiled to ensure that it is fast enough."
     print "--Exercise 1--"
-    testExm
-    benchExm
     -- testExm
-    -- print "Testing Large number"
-    -- large
-    -- print "Testing small number"
-    -- small
-    -- print "Testing Insane number"
-    -- largest
+    -- benchExm
     print "--Exercise 2--"
     testComposites
     print "--Exercise 3--"
@@ -25,9 +18,12 @@ main = do
     print "--Exercise 4--"
     -- leastComposites'
     print "--Exercise 5--"
-    someMPrimes 15
+    someMPrimes 12
     
     print "--Exercise 6--"
 
     print "--Exercise 7--"
+    {- 
+    - Testing with 1024 because 2048 takes too long for multiple runs.
+    -}
     rsaTestMult 10 1024
