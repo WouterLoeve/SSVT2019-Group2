@@ -9,6 +9,8 @@ main :: IO ()
 -- main =  (primeMR 1 (2^128)) >>= print
 main = do
     print "--Exercise 1--"
+    testExm
+    benchExm
     -- testExm
     -- print "Testing Large number"
     -- large
@@ -23,7 +25,7 @@ main = do
     print "--Exercise 4--"
     -- leastComposites'
     print "--Exercise 5--"
-    -- someMPrimes 8
+    someMPrimes 15
     
     print "--Exercise 6--"
 

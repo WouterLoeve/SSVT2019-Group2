@@ -10,7 +10,7 @@ import SetOrd
 import System.Random
 import Lecture5 hiding (composites)
 import Debug.Trace
-import Benchmark
+import Criterion.Main
 
 {-
  - testRunhelper helps print results
@@ -25,25 +25,14 @@ testRunHelper testName numCases numPass = do
 {-
  - Exercise 1
  - We should check if the result is the same as the straightforward implementation.
- -  Q: How do we do this for _very_ large values (since expM takes a long time for large values)?
- -      A: One possibility is to generate a large list of known values beforehand, and unit-test these cases.
- -      This would still require a large amount of computation, but only once because these results can be reused..
  - We should check if it is more efficient.
- -  Q: Can we time it? Should we use a benchmarking library (e.g. Criterion)?
- -      A: Yes, see Benchmark.hs
- -      Q: Can we benchmark for random numbers?
- -          A: Yes, we have used Criterion to benchmark our functions, which can be used with quickCheck
- -  Q: Can we prove efficiency? Can we estimate the complexity in bits?
- -      A: 
- - Can we check anything else?
- - WHEN is it faster? Can we reason about this?
- -      A: The exM function is only faster for large numbers. On low numbers, the overhead for recursion becomes
- -      higher than the naive implementation. This 
- -      Our function is limited by the recursion limit.
 -}
 
 {-
  - !! See Lecture5.hs for exM implementation !! 
+ - Due to other function's dependencies on the exM function, we elected to
+ - keep the implementation in the Lecture5.hs file, as opposed to moving it
+ - in this file with the other assignment implementations.
 -}
 
 {-
@@ -59,7 +48,7 @@ prop_checkPowerMod :: [Integer] -> Bool
 prop_checkPowerMod [a, b, c] = exM a b c < c
 
 {-
- - Test data generator
+ - Test data generator for simple positive numbers
  -}
 genPositiveIntegers :: Gen Integer
 genPositiveIntegers = abs <$> (arbitrary :: Gen Integer) `suchThat` (> 0)
@@ -74,19 +63,64 @@ testExm = do
     quickCheck $ forAll (vectorOf 3 genPositiveIntegers) prop_checkPowerMod
 
 {-
- - Benchmark Exm implementation
- -}
-benchExmPerf :: IO ()
-benchExmPerf = do
-    print "Benchmarking for known cases: small numbers"
-    small
-    print "Benchmarking for known cases: large numbers"
-    large
-    print "Benchmarking for known cases: largest numbers"
-    largest
-    print "Benchmarking for random cases"
-    
-    
+ - Test data generation for random performance testing
+ - This function generates a list of three Integers, representing the base, exponent and modulo
+ - The size of the resulting numbers is determined by a sizing parameter
+-}
+sizedInts :: Integer -> IO [Integer]
+sizedInts n = do
+    a <- randomRIO (1, n)
+    b <- randomRIO (1, n)
+    c <- randomRIO (1, n)
+    return [a,b,c]
+
+{-
+ - Benchmark Exm implementation for random data
+ - We use the `defaultMainWith` method from Criterion to run our benchmarks.
+ - This method expects a list of benchmarks, each encapsulated by an environment (the `env` function)
+ - This environment makes sure the same randomly generated test data is given to all functions in the benchmark.
+ - If the environment was not used, two functions in the same benchamrk could recieve different testdata, 
+ - and the comparison would no longer be fair. This method was sourced from:
+ - https://www.stackbuilders.com/news/obverse-versus-reverse-benchmarking-in-haskell-with-criterion
+ - One pitfall is the requirement that benchmark funcitons use lazy pattern matching. This is achieved by
+ - adding a tilde `~` character before the pattern. also the use of the `whnf` function is required in order to
+ - make the resulting structure lazy. Critirion requires this in order to evaluate the function only while being timed.
+ -
+ - So we wanted to test higher numbers, but the expM 
+    function would crash our laptops with a size of 10^10.
+ - For low numbers in a range of (1,100) we noticed that the 
+    expM is an order of magnitude faster. We theorise that this has 
+    to do with the overhead of recursion on smaller numbers.
+ - For numbers between (1, 10^5) we noticed that our exM function 
+    was about 3 times faster than than the expM function. 
+ - For numbers between (1, 10^8) we saw a huge speedup in our exM function 
+    compared to the expM function. 
+    The results varied from microseconds for our exM function versus 
+        miliseconds of our expM function.
+ - To conclude we see that our function is slower for small values around the 100s.
+ - We see a slight speedup in the larger numbers around 10^5.
+ - We see several orders of magnitude speedup for values around 10^8
+ - We would like to test higher values as well, but as we mentioned before 
+    this would take a long time and computers with good performance to test the expM function.
+ - It would also be interesting to test the (memory) efficiency and do complexity estimation 
+    increasing the number of bits.
+-}
+benchExm :: IO ()
+benchExm = do
+    print "Benchmarking exM vs expM performance using random input"
+    defaultMainWith defaultConfig [
+        env (sizedInts 100) (\ ~[a,b,c] -> 
+            bgroup "Benchmarking random input with size 100" 
+                [bench "exM" $ whnf (exM a b) c 
+                ,bench "expM" $ whnf (expM a b) c])
+        ,env (sizedInts (10^5)) (\ ~[a,b,c] -> 
+            bgroup "Benchmarking random input with size 10^5" 
+                [bench "exM" $ whnf (exM a b) c 
+                ,bench "expM" $ whnf (expM a b) c])
+        ,env (sizedInts (10^8)) (\ ~[a,b,c] -> 
+            bgroup "Benchmarking random input with size 10^8" 
+                [bench "exM" $ whnf (exM a b) c 
+                ,bench "expM" $ whnf (expM a b) c])]
         
     
 
@@ -254,38 +288,48 @@ leastComposites' = do
  - TODO: do statistics (check how many fake primes occur and if it matches expectation).
  -  Q: how to deal with runtime? Can we only check primality statistics for the first n numbers?
 -}
-probableMPrimes :: Int -> [Integer] -> IO [Integer]
-probableMPrimes 0 _ = return []
-probableMPrimes n (p:ps) = do
+probableMPrimes :: Int -> [Integer] -> Int ->  IO [Integer]
+probableMPrimes 0 _ k = return []
+probableMPrimes n (p:ps) k = do
     let mp = 2^p - 1
-    b <- primeMR 1 mp
+    b <- primeMR k mp
     if b then
-        (mp :) <$> probableMPrimes (n - 1) ps
+        (mp :) <$> probableMPrimes (n - 1) ps k
     else
-        probableMPrimes n ps
+        probableMPrimes n ps k
 
 mersprimes = [mers x | x <- [1..25]]
 
+{-
+ - With this function we print the first x primes.
+ - Then for k, 1 to 4 we check the number of falsely generated primes for our function.
+        In which k is the number of rounds used for the miller rabin primality check.
+ - On a recent desktop we were able to generate 23 mersenne primes with k=1, excluding the error rate check.
+ -}
 someMPrimes :: Int -> IO ()
 someMPrimes x = do
-    print ("First " ++ show x ++  " Mersenne primes obtained:")
-    mprimes <- probableMPrimes x primes
+    print ("First " ++ show x ++  " Mersenne primes obtained for k = 1")
+    mprimes <- probableMPrimes x primes 1
     print mprimes
-    print "Fake primes:"
-    print $ filter (not . (`elem` mersprimes)) mprimes
-    -- ((primeMR 40) <$> mprimes) >>= print
-    -- filterFalsePri9mes <$> mprimes
-    -- print $ filterM ((liftM not) primeMR 40) mprimes
+    let num = 1000
+    rate <- checkForErrorRate x num 0 1
+    print $ "Error rate over k = 1: " ++ (show rate) ++ " / " ++ (show num)
 
-    -- primeMR 40 mprimes >>= print $ filter(not . prime)
-    -- print $ filterM ((not .) <$> (primeMR 40)) mprimes
+    rate2 <- checkForErrorRate x num 0 2
+    print $ "Error rate over k = 2: " ++ (show rate2) ++ " / " ++ (show num)
 
-filterFalsePrimes :: Integer -> IO ()
-filterFalsePrimes xs = do
-    isPrime <- (primeMR 40) xs
-    -- isPrime >>= print
-    print isPrime
-    
+    rate3 <- checkForErrorRate x num 0 3
+    print $ "Error rate over k = 3: " ++ (show rate3) ++ " / " ++ (show num)
+
+    rate4 <- checkForErrorRate x num 0 4
+    print $ "Error rate over k = 4: " ++ (show rate4) ++ " / " ++ (show num)
+
+checkForErrorRate :: Int -> Int -> Int -> Int -> IO Int
+checkForErrorRate mer 0 errors k = return errors
+checkForErrorRate mer x errors k = do
+    mprimes <- probableMPrimes mer primes k
+    let l = length $ filter (not . (`elem` mersprimes)) mprimes
+    checkForErrorRate mer (x-1) (errors+l) k
 
 {-
 - X TODO: use implementation to find a few mersenne primes?
@@ -393,9 +437,11 @@ rsaTest bits = do
     let n = p*q
     print p
     print q
+    print d
+    print e
     -- quickCheck (\v -> prop_encIsDecrypt v e d n)
     -- quickCheck (\v -> prop_encDoesSomething v e d n)
-    print $ prop_encDoesSomething 5 e d n
+    print $ prop_encDoesSomething 6 e d n
     -- quickCheck (\v -> prop_decDoesSomething v e d n)
     -- quickCheck prop_isPrime
 

@@ -110,7 +110,10 @@ expM ::  Integer -> Integer -> Integer -> Integer
 expM x y = rem (x^y)
 
 {-
- - Our version of the polynomial exponentiation
+ - Our version of the polynomial exponentiation,
+ - it uses the 'divide and conquer' strategy described in the assignment by
+ - recursively splitting the equation to be calculated into smaller parts, until one
+ - of the three base cases (the first two patterns, and the guard n < 0) is reached.
  -}
 exM :: Integer -> Integer -> Integer -> Integer
 exM x 0 m = 1 `rem` m
