@@ -25,6 +25,7 @@ dependencies:
 - random
 - criterion
 - cond
+- math-functions
 
 library:
   source-dirs: src

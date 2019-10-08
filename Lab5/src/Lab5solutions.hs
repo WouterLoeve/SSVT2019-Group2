@@ -25,37 +25,6 @@ testRunHelper testName numCases numPass = do
 
 {-
  - Exercise 1
- - We should check if the result is the same as the straightforward implementation.
-<<<<<<< HEAD
- - We should check if it is more efficient.
--}
-
-{-
- - !! See Lecture5.hs for exM implementation !!
- - Due to other function's dependencies on the exM function, we elected to
- - keep the implementation in the Lecture5.hs file, as opposed to moving it
- - in this file with the other assignment implementations.
-=======
- -  Q: How do we do this for _very_ large values (since expM takes a long time for large values)?
- -      A: One possibility is to generate a large list of known values beforehand, and unit-test these cases.
- -      This would still require a large amount of computation, but only once because these results can be reused.
- - We should check if it is more efficient.
- -  Q: Can we time it? Should we use a benchmarking library (e.g. Criterion)?
- -      A: Yes, see Benchmark.hs
- -      Q: Can we benchmark for random numbers?
- -          A: Yes, we have used Criterion to benchmark our functions, which can be used with quickCheck
- -  Q: Can we prove efficiency? Can we estimate the complexity in bits?
- -      A:
- - Can we check anything else?
- - WHEN is it faster? Can we reason about this?
- -      A: The exM function is only faster for large numbers. On low numbers, the overhead for recursion becomes
- -      higher than the naive implementation. This
- -      Our function is limited by the recursion limit.
--}
-
-{-
- - !! See Lecture5.hs for exM implementation !!
->>>>>>> 674a458fa8365395e3b1b586592f856b2976d469
 -}
 
 {-
@@ -127,6 +96,7 @@ sizedInts n = do
     this would take a long time and computers with good performance to test the expM function.
  - It would also be interesting to test the (memory) efficiency and do complexity estimation
     increasing the number of bits.
+ - Another thing to mention is that our function is limited by the recursion limit.
 -}
 benchExm :: IO ()
 benchExm = do
@@ -352,19 +322,19 @@ someMPrimes x = do
     print mprimes
     let num = 1000
     rate <- checkForErrorRate x num 0 0
-    print $ "Error rate over the first " ++ (show x) ++ " primes; k = 0: " ++ (show rate) ++ " / " ++ (show (num*x))
+    print $ "Error rate over the first " ++ show x ++ " primes; k = 0: " ++ show rate ++ " / " ++ show (num*x)
 
     rate1 <- checkForErrorRate x num 0 1
-    print $ "Error rate over the first " ++ (show x) ++ " primes; k = 1: " ++ (show rate1) ++ " / " ++ (show (num*x))
+    print $ "Error rate over the first " ++ show x ++ " primes; k = 1: " ++ show rate1 ++ " / " ++ show (num*x)
 
     rate2 <- checkForErrorRate x num 0 2
-    print $ "Error rate over the first " ++ (show x) ++ " primes; k = 2: " ++ (show rate2) ++ " / " ++ (show (num*x))
+    print $ "Error rate over the first " ++ show x ++ " primes; k = 2: " ++ show rate2 ++ " / " ++ show (num*x)
 
     rate3 <- checkForErrorRate x num 0 3
-    print $ "Error rate over the first " ++ (show x) ++ " primes; k = 3: " ++ (show rate3) ++ " / " ++ (show (num*x))
+    print $ "Error rate over the first " ++ show x ++ " primes; k = 3: " ++ show rate3 ++ " / " ++ show (num*x)
 
     rate4 <- checkForErrorRate x num 0 4
-    print $ "Error rate over the first " ++ (show x) ++ " primes; k = 4: " ++ (show rate4) ++ " / " ++ (show (num*x))
+    print $ "Error rate over the first " ++ show x ++ " primes; k = 4: " ++ show rate4 ++ " / " ++ show (num*x)
 
 {-
  - To check for fake mersenne primes we check the list of mersenne primes defined in the lecture code and 
