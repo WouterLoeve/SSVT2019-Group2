@@ -25,14 +25,14 @@ testRunHelper testName numCases numPass = do
  - Exercise 1
  - We should check if the result is the same as the straightforward implementation.
  -  Q: How do we do this for _very_ large values (since expM takes a long time for large values)?
- -      A: 
+ -      A:
  - We should check if it is more efficient.
  -  Q: Can we time it? Should we use a benchmarking library (e.g. Criterion)?
  -      A: Yes, see Benchmark.hs
  -      Q: Can we benchmark for random numbers?
  -          A:
  -  Q: Can we prove efficiency? Can we estimate the complexity in bits?
- -      A: 
+ -      A:
  - Can we check anything else?
  - WHEN is it faster? Can we reason about this?
  -  A:
@@ -40,7 +40,7 @@ testRunHelper testName numCases numPass = do
 -}
 
 {-
- - !! See Lecture5.hs for exM implementation !! 
+ - !! See Lecture5.hs for exM implementation !!
 -}
 
 {-
@@ -74,7 +74,7 @@ https://www.cs.tufts.edu/~nr/cs257/archive/john-hughes/quick.pdf
  - For example in a list comprehension, use an extra conditional to say that the number should be lower than some arbitrary number.
  - If that happens this way of testing doesn't work.
  - We can however, find some errors in the function looking at a initial finite part.
- - 
+ -
  -}
 
 {-
@@ -97,22 +97,35 @@ composites :: [Integer]
 composites = filter (not . prime) [4..]
 
 {-
- - Tests whether the number of factors for the first n composites is higher than 0.
- - A factor of 0 means that the number is a prime 
-    since factors does not report the trivial case of 1 and itself as a factor and
-    a number is prime if it is only divisble by itself and 1, which are both not reported.
- - Since the absence of these reports we can assume that the number is prime if it does not have factors.
+ - Tests whether the number of factors for the first n composites is higher than 1.
+ - Each element in the list of factors is multiplied with each other, and the result is
+ - multiplied with 1, resulting eventually in the initial given number.
+ -
+ - If the length of the factors is 1, this means that the list of factors only contains the
+ - given number itself. Therefore, when the given number is a prime, the length of the
+ - list of factors is 1.
+ -
+ - So we want to test whether the amount of factors of each composite is
+ - larger than 1, which is stated as a property below.
+ -
+ - Finally, a property is added stating that the given composites should
+ - be positive numbers or else they would not be composites.
  -}
 prop_compFactor :: Integer -> Bool
-prop_compFactor n = all (not . null . factors) (take (fromIntegral n) composites) 
+prop_compFactor n = all (>1) ((length . factors) <$> (take (fromIntegral n) composites))
+
+prop_compPositive :: Integer -> Bool
+prop_compPositive n = all (>0) (take (fromIntegral n) composites)
 
 testComposites :: IO ()
 testComposites = do
-    print "Testing whether sample elements have factors"
+    print "Testing whether sample elements have factors other than 1 and itself"
     quickCheck $ forAll genPositiveIntegers prop_compFactor
+    print "Testing whether sample elements are positive numbers"
+    quickCheck $ forAll genPositiveIntegers prop_compPositive
 
 
-{- 
+{-
  - Exercise 3
  - In addition to the single trials, do some testing on the modes of the smallest composite numbers accepted for any k.
  - We hypothesize that the least composite number scales exponentially with k due to needing to pass all tests.
@@ -120,7 +133,7 @@ testComposites = do
  -
  - Note that the test may take a long time due to nondeterminism.
  - The running time of the test should scale somewhat exponentially too.
- - This is due to the combination of more or larger: k's used, repeated trials, 
+ - This is due to the combination of more or larger: k's used, repeated trials,
  -  higher primes (in the composite generator), higher exponentiation.
  - Each aspect causes the others to increase as well.
  - Fairly conservative values were chosen, but it may still be necessary to restart the test in some cases.
@@ -153,7 +166,7 @@ leastComposites = do
     print "Modal least composites for ks = [1, 2, 3, 5, 7] for trials n = 10"
     print =<< modalComposites [1, 2, 3, 5, 7] 10 composites
 
-{- 
+{-
  - Exercise 4
  - Fermat's little theorem states a^(p-1) mod p = 1 for any prime p and integer a not divisible by p.
  - Carmichael numbers are numbers for which this is true for any a coprime to them.
@@ -169,10 +182,10 @@ leastComposites = do
  - In fact, we expect the first number to be most common until around k=14, since 0.95^k > 0.5 for 0 < k < 14.
 -}
 carmichael :: [Integer]
-carmichael = [ (6*k+1)*(12*k+1)*(18*k+1) | 
-      k <- [2..], 
-      prime (6*k+1), 
-      prime (12*k+1), 
+carmichael = [ (6*k+1)*(12*k+1)*(18*k+1) |
+      k <- [2..],
+      prime (6*k+1),
+      prime (12*k+1),
       prime (18*k+1) ]
 
 ncoprimes :: Integer -> Int
@@ -185,6 +198,14 @@ ncoprimes n = length $ filter (\m -> gcd n m == 1) [2..n-1]
 expectedPassRate :: Fractional a => Int -> Int -> a
 expectedPassRate n k = (fromIntegral (ncoprimes m) / fromIntegral (m - 2)) ^ k
     where m = carmichael !! n
+
+binom :: Int -> Int -> Int
+binom n 0 = 1
+binom 0 k = 0
+binom n k = binom (n-1) (k-1) * n `div` k
+
+binomTest :: Int -> Int -> Float -> Float
+binomTest k n p = (fromIntegral (binom n k)) * (p^(fromIntegral k)) * ((1 - p)^(n - k))
 
 leastComposites' :: IO ()
 leastComposites' = do
@@ -209,8 +230,8 @@ leastComposites' = do
     print $ "Least composite carmichael number for MR test with k = 1 is " ++ show leastComposite1'
     print $ "Least composite carmichael number for MR test with k = 2 is " ++ show leastComposite2'
     print $ "Least composite carmichael number for MR test with k = 3 is " ++ show leastComposite3'
-    
--- prop_primetest :: IO 
+
+-- prop_primetest :: IO
 -- prop_primetest = primeTestsF 40
 
 -- testFermat :: IO ()
@@ -221,7 +242,7 @@ leastComposites' = do
 
 
 
-{- 
+{-
  - Exercise 5
  - Mersenne primes are primes of the form 2^n - 1.
  - The generated numbers are of this form by definition, so we only have to check primality.
@@ -330,7 +351,7 @@ genRSAKeys = do
     let d = genRSAdecrypt e tot
 
     return (e, d, n)
-        
+
 genRSAencrypt :: Integer -> IO Integer
 genRSAencrypt tot = do
     e <- randomRIO (1, tot)
@@ -358,7 +379,7 @@ rsaDecodeM keys m = do
 rsaTest val = do
    (e, d, n) <- genRSAKeys
    let encrypted = rsaEncode (e, n) val
-   let decrypted = rsaDecode (d, n) encrypted 
+   let decrypted = rsaDecode (d, n) encrypted
    print encrypted
    print decrypted
    print val
