@@ -25,12 +25,14 @@ testRunHelper testName numCases numPass = do
  - Exercise 1
  - We should check if the result is the same as the straightforward implementation.
  -  Q: How do we do this for _very_ large values (since expM takes a long time for large values)?
- -      A: 
+ -      A: One possibility is to generate a large list of known values beforehand, and unit-test these cases.
+ -      This would still require a large amount of computation, but only once because these results can be reused..
  - We should check if it is more efficient.
  -  Q: Can we time it? Should we use a benchmarking library (e.g. Criterion)?
  -      A: Yes, see Benchmark.hs
  -      Q: Can we benchmark for random numbers?
- -          A:
+ -          A: Yes, this should be possible by putting timing providing random numbers (for example by using quickcheck)
+ -          And timing the function on this input.
  -  Q: Can we prove efficiency? Can we estimate the complexity in bits?
  -      A: 
  - Can we check anything else?
@@ -55,6 +57,9 @@ prop_checkPower [a, b, c] = exM a b c == expM a b c
 prop_checkPowerMod :: [Integer] -> Bool
 prop_checkPowerMod [a, b, c] = exM a b c < c
 
+{-
+ - Test data generator
+ -}
 genPositiveIntegers :: Gen Integer
 genPositiveIntegers = abs <$> (arbitrary :: Gen Integer) `suchThat` (> 0)
 
@@ -74,7 +79,6 @@ https://www.cs.tufts.edu/~nr/cs257/archive/john-hughes/quick.pdf
  - For example in a list comprehension, use an extra conditional to say that the number should be lower than some arbitrary number.
  - If that happens this way of testing doesn't work.
  - We can however, find some errors in the function looking at a initial finite part.
- - 
  -}
 
 {-
