@@ -10,6 +10,7 @@ import SetOrd
 import System.Random
 import Lecture5 hiding (composites)
 import Debug.Trace
+import Benchmark
 
 {-
  - testRunhelper helps print results
@@ -31,14 +32,14 @@ testRunHelper testName numCases numPass = do
  -  Q: Can we time it? Should we use a benchmarking library (e.g. Criterion)?
  -      A: Yes, see Benchmark.hs
  -      Q: Can we benchmark for random numbers?
- -          A: Yes, this should be possible by putting timing providing random numbers (for example by using quickcheck)
- -          And timing the function on this input.
+ -          A: Yes, we have used Criterion to benchmark our functions, which can be used with quickCheck
  -  Q: Can we prove efficiency? Can we estimate the complexity in bits?
  -      A: 
  - Can we check anything else?
  - WHEN is it faster? Can we reason about this?
- -  A:
- - Our function is limited by the recursion limit.
+ -      A: The exM function is only faster for large numbers. On low numbers, the overhead for recursion becomes
+ -      higher than the naive implementation. This 
+ -      Our function is limited by the recursion limit.
 -}
 
 {-
@@ -63,11 +64,31 @@ prop_checkPowerMod [a, b, c] = exM a b c < c
 genPositiveIntegers :: Gen Integer
 genPositiveIntegers = abs <$> (arbitrary :: Gen Integer) `suchThat` (> 0)
 
+{-
+ - Test Exm implementation
+ -}
 testExm :: IO ()
 testExm = do
     print "Testing whether our fast version yields the same output as expM"
     quickCheck $ forAll (vectorOf 3 genPositiveIntegers) prop_checkPower
     quickCheck $ forAll (vectorOf 3 genPositiveIntegers) prop_checkPowerMod
+
+{-
+ - Benchmark Exm implementation
+ -}
+benchExmPerf :: IO ()
+benchExmPerf = do
+    print "Benchmarking for known cases: small numbers"
+    small
+    print "Benchmarking for known cases: large numbers"
+    large
+    print "Benchmarking for known cases: largest numbers"
+    largest
+    print "Benchmarking for random cases"
+    
+    
+        
+    
 
 {-
  - Exercise 2
@@ -257,7 +278,7 @@ someMPrimes x = do
     -- print $ filterM ((liftM not) primeMR 40) mprimes
 
     -- primeMR 40 mprimes >>= print $ filter(not . prime)
-    -- print $ filter (not . (primeMR 40)) mprimes
+    -- print $ filterM ((not .) <$> (primeMR 40)) mprimes
 
 filterFalsePrimes :: Integer -> IO ()
 filterFalsePrimes xs = do
@@ -370,7 +391,12 @@ rsaTest bits = do
     let (e, n) = rsaPublic p q
     let (d, n) = rsaPrivate p q
     let n = p*q
-    quickCheck (\v -> prop_encIsDecrypt v e d n)
+    print p
+    print q
+    -- quickCheck (\v -> prop_encIsDecrypt v e d n)
+    -- quickCheck (\v -> prop_encDoesSomething v e d n)
+    print $ prop_encDoesSomething 5 e d n
+    -- quickCheck (\v -> prop_decDoesSomething v e d n)
     -- quickCheck prop_isPrime
 
 {-
@@ -379,18 +405,20 @@ rsaTest bits = do
 prop_encIsDecrypt :: Integer -> Integer -> Integer -> Integer -> Bool
 prop_encIsDecrypt val e d n = val == rsaDecode (d, n) (rsaEncode (e, n) val)
 
-prop_encDoesSomething :: Integer -> Integer -> Integer -> Integer -> Bool
-prop_encDoesSomething val e d n = enc /= val
-    where enc = rsaEncode(e, n) val
-
 {-
  - Checks whether encode actually changes the value. 
  - There is a tiny chance that this property doesn't work as the encoding function for a 
  - specific message might yield the same value as the original message.
+ - This is usefull to test because an empty encrypt function followed by an empty decrypt 
+ - function would satisfy the prop_encIsDecrypt property.
  -}
--- prop_encDoesSomething :: Integer -> Integer -> Integer -> Integer -> Property
--- prop_encDoesSomething val e d n = enc != val
---     where enc = rsaEncode(e, n) val
+prop_encDoesSomething :: Integer -> Integer -> Integer -> Integer -> Integer
+prop_encDoesSomething val e d n = enc
+    where enc = rsaEncode(e, n) val
+
+prop_decDoesSomething :: Integer -> Integer -> Integer -> Integer -> Bool
+prop_decDoesSomething val e d n = dec /= val
+    where dec = rsaDecode(d, n) val
 
 prop_isPrime = primeMR 100
 
