@@ -25,6 +25,7 @@ testRunHelper testName numCases numPass = do
 {-
  - Exercise 1
  - We should check if the result is the same as the straightforward implementation.
+<<<<<<< HEAD
  - We should check if it is more efficient.
 -}
 
@@ -33,6 +34,27 @@ testRunHelper testName numCases numPass = do
  - Due to other function's dependencies on the exM function, we elected to
  - keep the implementation in the Lecture5.hs file, as opposed to moving it
  - in this file with the other assignment implementations.
+=======
+ -  Q: How do we do this for _very_ large values (since expM takes a long time for large values)?
+ -      A: One possibility is to generate a large list of known values beforehand, and unit-test these cases.
+ -      This would still require a large amount of computation, but only once because these results can be reused.
+ - We should check if it is more efficient.
+ -  Q: Can we time it? Should we use a benchmarking library (e.g. Criterion)?
+ -      A: Yes, see Benchmark.hs
+ -      Q: Can we benchmark for random numbers?
+ -          A: Yes, we have used Criterion to benchmark our functions, which can be used with quickCheck
+ -  Q: Can we prove efficiency? Can we estimate the complexity in bits?
+ -      A:
+ - Can we check anything else?
+ - WHEN is it faster? Can we reason about this?
+ -      A: The exM function is only faster for large numbers. On low numbers, the overhead for recursion becomes
+ -      higher than the naive implementation. This
+ -      Our function is limited by the recursion limit.
+-}
+
+{-
+ - !! See Lecture5.hs for exM implementation !!
+>>>>>>> 674a458fa8365395e3b1b586592f856b2976d469
 -}
 
 {-
@@ -63,6 +85,7 @@ testExm = do
     quickCheck $ forAll (vectorOf 3 genPositiveIntegers) prop_checkPowerMod
 
 {-
+<<<<<<< HEAD
  - Test data generation for random performance testing
  - This function generates a list of three Integers, representing the base, exponent and modulo
  - The size of the resulting numbers is determined by a sizing parameter
@@ -121,8 +144,6 @@ benchExm = do
             bgroup "Benchmarking random input with size 10^8" 
                 [bench "exM" $ whnf (exM a b) c 
                 ,bench "expM" $ whnf (expM a b) c])]
-        
-    
 
 {-
  - Exercise 2
@@ -156,22 +177,35 @@ composites :: [Integer]
 composites = filter (not . prime) [4..]
 
 {-
- - Tests whether the number of factors for the first n composites is higher than 0.
- - A factor of 0 means that the number is a prime 
-    since factors does not report the trivial case of 1 and itself as a factor and
-    a number is prime if it is only divisble by itself and 1, which are both not reported.
- - Since the absence of these reports we can assume that the number is prime if it does not have factors.
+ - Tests whether the number of factors for the first n composites is higher than 1.
+ - Each element in the list of factors is multiplied with each other, and the result is
+ - multiplied with 1, resulting eventually in the initial given number.
+ -
+ - If the length of the factors is 1, this means that the list of factors only contains the
+ - given number itself. Therefore, when the given number is a prime, the length of the
+ - list of factors is 1.
+ -
+ - So we want to test whether the amount of factors of each composite is
+ - larger than 1, which is stated as a property below.
+ -
+ - Finally, a property is added stating that the given composites should
+ - be positive numbers or else they would not be composites.
  -}
 prop_compFactor :: Integer -> Bool
-prop_compFactor n = all (not . null . factors) (take (fromIntegral n) composites) 
+prop_compFactor n = all (>1) ((length . factors) <$> (take (fromIntegral n) composites))
+
+prop_compPositive :: Integer -> Bool
+prop_compPositive n = all (>0) (take (fromIntegral n) composites)
 
 testComposites :: IO ()
 testComposites = do
-    print "Testing whether sample elements have factors"
+    print "Testing whether sample elements have factors other than 1 and itself"
     quickCheck $ forAll genPositiveIntegers prop_compFactor
+    print "Testing whether sample elements are positive numbers"
+    quickCheck $ forAll genPositiveIntegers prop_compPositive
 
 
-{- 
+{-
  - Exercise 3
  - In addition to the single trials, do some testing on the modes of the smallest composite numbers accepted for any k.
  - We hypothesize that the least composite number scales exponentially with k due to needing to pass all tests.
@@ -179,7 +213,7 @@ testComposites = do
  -
  - Note that the test may take a long time due to nondeterminism.
  - The running time of the test should scale somewhat exponentially too.
- - This is due to the combination of more or larger: k's used, repeated trials, 
+ - This is due to the combination of more or larger: k's used, repeated trials,
  -  higher primes (in the composite generator), higher exponentiation.
  - Each aspect causes the others to increase as well.
  - Fairly conservative values were chosen, but it may still be necessary to restart the test in some cases.
@@ -212,7 +246,7 @@ leastComposites = do
     print "Modal least composites for ks = [1, 2, 3, 5, 7] for trials n = 10"
     print =<< modalComposites [1, 2, 3, 5, 7] 10 composites
 
-{- 
+{-
  - Exercise 4
  - Fermat's little theorem states a^(p-1) mod p = 1 for any prime p and integer a not divisible by p.
  - Carmichael numbers are numbers for which this is true for any a coprime to them.
@@ -228,10 +262,10 @@ leastComposites = do
  - In fact, we expect the first number to be most common until around k=14, since 0.95^k > 0.5 for 0 < k < 14.
 -}
 carmichael :: [Integer]
-carmichael = [ (6*k+1)*(12*k+1)*(18*k+1) | 
-      k <- [2..], 
-      prime (6*k+1), 
-      prime (12*k+1), 
+carmichael = [ (6*k+1)*(12*k+1)*(18*k+1) |
+      k <- [2..],
+      prime (6*k+1),
+      prime (12*k+1),
       prime (18*k+1) ]
 
 ncoprimes :: Integer -> Int
@@ -244,6 +278,14 @@ ncoprimes n = length $ filter (\m -> gcd n m == 1) [2..n-1]
 expectedPassRate :: Fractional a => Int -> Int -> a
 expectedPassRate n k = (fromIntegral (ncoprimes m) / fromIntegral (m - 2)) ^ k
     where m = carmichael !! n
+
+binom :: Int -> Int -> Int
+binom n 0 = 1
+binom 0 k = 0
+binom n k = binom (n-1) (k-1) * n `div` k
+
+binomTest :: Int -> Int -> Float -> Float
+binomTest k n p = (fromIntegral (binom n k)) * (p^(fromIntegral k)) * ((1 - p)^(n - k))
 
 leastComposites' :: IO ()
 leastComposites' = do
@@ -268,8 +310,8 @@ leastComposites' = do
     print $ "Least composite carmichael number for MR test with k = 1 is " ++ show leastComposite1'
     print $ "Least composite carmichael number for MR test with k = 2 is " ++ show leastComposite2'
     print $ "Least composite carmichael number for MR test with k = 3 is " ++ show leastComposite3'
-    
--- prop_primetest :: IO 
+
+-- prop_primetest :: IO
 -- prop_primetest = primeTestsF 40
 
 -- testFermat :: IO ()
@@ -280,7 +322,7 @@ leastComposites' = do
 
 
 
-{- 
+{-
  - Exercise 5
  - Mersenne primes are primes of the form 2^n - 1.
  - The generated numbers are of this form by definition, so we only have to check primality.
@@ -304,7 +346,7 @@ mersprimes = [mers x | x <- [1..25]]
  - With this function we print the first x primes.
  - Then for k, 1 to 4 we check the number of falsely generated primes for our function.
         In which k is the number of rounds used for the miller rabin primality check.
- - On a recent desktop we were able to generate 23 mersenne primes with k=1, excluding the error rate check.
+ - On a recent desktop we were able to generate 23 mersenne primes with k=1, excluding the error rate computation.
  -}
 someMPrimes :: Int -> IO ()
 someMPrimes x = do
@@ -330,12 +372,6 @@ checkForErrorRate mer x errors k = do
     mprimes <- probableMPrimes mer primes k
     let l = length $ filter (not . (`elem` mersprimes)) mprimes
     checkForErrorRate mer (x-1) (errors+l) k
-
-{-
-- X TODO: use implementation to find a few mersenne primes?
-- X TODO: compare with list of known mersenne primes, test if it always holds
-- TODO: statistiek hoe vaak het een fake prime is
--}
 
 {-
     - Exercise6
@@ -452,10 +488,10 @@ prop_encIsDecrypt :: Integer -> Integer -> Integer -> Integer -> Bool
 prop_encIsDecrypt val e d n = val == rsaDecode (d, n) (rsaEncode (e, n) val)
 
 {-
- - Checks whether encode actually changes the value. 
- - There is a tiny chance that this property doesn't work as the encoding function for a 
+ - Checks whether encode actually changes the value.
+ - There is a tiny chance that this property doesn't work as the encoding function for a
  - specific message might yield the same value as the original message.
- - This is usefull to test because an empty encrypt function followed by an empty decrypt 
+ - This is usefull to test because an empty encrypt function followed by an empty decrypt
  - function would satisfy the prop_encIsDecrypt property.
  -}
 prop_encDoesSomething :: Integer -> Integer -> Integer -> Integer -> Integer
