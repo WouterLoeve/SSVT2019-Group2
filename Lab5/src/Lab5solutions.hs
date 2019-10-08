@@ -31,7 +31,8 @@ testRunHelper testName numCases numPass = do
  -  Q: Can we time it? Should we use a benchmarking library (e.g. Criterion)?
  -      A: Yes, see Benchmark.hs
  -      Q: Can we benchmark for random numbers?
- -          A: Yes, this should be possible by putting a Criterion timing function in a quickheck property
+ -          A: Yes, this should be possible by putting timing providing random numbers (for example by using quickcheck)
+ -          And timing the function on this input.
  -  Q: Can we prove efficiency? Can we estimate the complexity in bits?
  -      A: 
  - Can we check anything else?
