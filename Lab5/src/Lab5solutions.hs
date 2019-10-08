@@ -196,7 +196,10 @@ testComposites = do
 leastComposite :: Int -> [Integer] -> IO Integer
 leastComposite k = fix (\f (x:xs) -> do b <- primeTestsF k x; if b then return x else f xs)
 
--- https://rosettacode.org/wiki/Averages/Mode#Haskell
+{-
+ - Calculates the mode, ergo, the most occuring value.
+ - https://rosettacode.org/wiki/Averages/Mode#Haskell
+ -}
 mode :: (Ord a) => [a] -> [a]
 mode xs = map fst $ filter ((==best).snd) counts
     where counts = map (\l -> (head l, length l)) . group . sort $ xs
@@ -261,7 +264,7 @@ binomTest n p k
 
 testPrimalityCarmichael :: IO [Bool]
 testPrimalityCarmichael = do
-    successes <- sequence $ fmap (\_ -> primeTestsF 1 (head (take 1 carmichael))) [1..100]
+    successes <- sequence $ fmap (\_ -> primeTestsF 1 (head (take 1 carmichael))) [1..1000]
     return successes
 
 leastComposites' :: IO ()
@@ -278,7 +281,7 @@ leastComposites' = do
 
     print "4.2"
     k <- testPrimalityCarmichael
-    print $ "p-value for the Fermat's test: " ++ show (binomTest 100 0.95 (length (filter (==True) k)))
+    print $ "p-value for the Fermat's test: " ++ show (binomTest 1000 0.95 (length (filter (==True) k)))
 
     print "4.3"
     let leastComposite' k = fix (\f (x:xs) -> do b <- primeMR k x; if b then return x else f xs)
