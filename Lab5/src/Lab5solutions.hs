@@ -188,12 +188,7 @@ testComposites = do
  -  higher primes (in the composite generator), higher exponentiation.
  - Each aspect causes the others to increase as well.
  - Fairly conservative values were chosen, but it may still be necessary to restart the test in some cases.
- -
- - TODO: Generate/search primes and test whether they go through the primality test
- - We can check how many tests the prime correctly passes, and state with a certain confidence if the test works.
- - Basically a prime is correctly identified if 100% of a's return true.
- - Thus the chance of the function being correct given k different a's is: 1 - (1 - 1/(p - 2))^k (?)
--}
+ -}
 leastComposite :: Int -> [Integer] -> IO Integer
 leastComposite k = fix (\f (x:xs) -> do b <- primeTestsF k x; if b then return x else f xs)
 
