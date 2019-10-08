@@ -3,7 +3,7 @@ import Data.List
 import Data.Char
 import Data.Tuple
 import Data.Function
-import Test.QuickCheck
+import Test.QuickCheck hiding (choose)
 import Control.Monad
 import Control.Conditional
 import SetOrd
@@ -11,6 +11,7 @@ import System.Random
 import Lecture5 hiding (composites)
 import Debug.Trace
 import Criterion.Main
+import Numeric.SpecFunctions (choose, logChoose, log1p)
 
 {-
  - testRunhelper helps print results
@@ -30,7 +31,7 @@ testRunHelper testName numCases numPass = do
 -}
 
 {-
- - !! See Lecture5.hs for exM implementation !! 
+ - !! See Lecture5.hs for exM implementation !!
  - Due to other function's dependencies on the exM function, we elected to
  - keep the implementation in the Lecture5.hs file, as opposed to moving it
  - in this file with the other assignment implementations.
@@ -101,47 +102,47 @@ sizedInts n = do
  - We use the `defaultMainWith` method from Criterion to run our benchmarks.
  - This method expects a list of benchmarks, each encapsulated by an environment (the `env` function)
  - This environment makes sure the same randomly generated test data is given to all functions in the benchmark.
- - If the environment was not used, two functions in the same benchamrk could recieve different testdata, 
+ - If the environment was not used, two functions in the same benchamrk could recieve different testdata,
  - and the comparison would no longer be fair. This method was sourced from:
  - https://www.stackbuilders.com/news/obverse-versus-reverse-benchmarking-in-haskell-with-criterion
  - One pitfall is the requirement that benchmark funcitons use lazy pattern matching. This is achieved by
  - adding a tilde `~` character before the pattern. also the use of the `whnf` function is required in order to
  - make the resulting structure lazy. Critirion requires this in order to evaluate the function only while being timed.
  -
- - So we wanted to test higher numbers, but the expM 
+ - So we wanted to test higher numbers, but the expM
     function would crash our laptops with a size of 10^10.
- - For low numbers in a range of (1,100) we noticed that the 
-    expM is an order of magnitude faster. We theorise that this has 
+ - For low numbers in a range of (1,100) we noticed that the
+    expM is an order of magnitude faster. We theorise that this has
     to do with the overhead of recursion on smaller numbers.
- - For numbers between (1, 10^5) we noticed that our exM function 
-    was about 3 times faster than than the expM function. 
- - For numbers between (1, 10^8) we saw a huge speedup in our exM function 
-    compared to the expM function. 
-    The results varied from microseconds for our exM function versus 
+ - For numbers between (1, 10^5) we noticed that our exM function
+    was about 3 times faster than than the expM function.
+ - For numbers between (1, 10^8) we saw a huge speedup in our exM function
+    compared to the expM function.
+    The results varied from microseconds for our exM function versus
         miliseconds of our expM function.
  - To conclude we see that our function is slower for small values around the 100s.
  - We see a slight speedup in the larger numbers around 10^5.
  - We see several orders of magnitude speedup for values around 10^8
- - We would like to test higher values as well, but as we mentioned before 
+ - We would like to test higher values as well, but as we mentioned before
     this would take a long time and computers with good performance to test the expM function.
- - It would also be interesting to test the (memory) efficiency and do complexity estimation 
+ - It would also be interesting to test the (memory) efficiency and do complexity estimation
     increasing the number of bits.
 -}
 benchExm :: IO ()
 benchExm = do
     print "Benchmarking exM vs expM performance using random input"
     defaultMainWith defaultConfig [
-        env (sizedInts 100) (\ ~[a,b,c] -> 
-            bgroup "Benchmarking random input with size 100" 
-                [bench "exM" $ whnf (exM a b) c 
+        env (sizedInts 100) (\ ~[a,b,c] ->
+            bgroup "Benchmarking random input with size 100"
+                [bench "exM" $ whnf (exM a b) c
                 ,bench "expM" $ whnf (expM a b) c])
-        ,env (sizedInts (10^5)) (\ ~[a,b,c] -> 
-            bgroup "Benchmarking random input with size 10^5" 
-                [bench "exM" $ whnf (exM a b) c 
+        ,env (sizedInts (10^5)) (\ ~[a,b,c] ->
+            bgroup "Benchmarking random input with size 10^5"
+                [bench "exM" $ whnf (exM a b) c
                 ,bench "expM" $ whnf (expM a b) c])
-        ,env (sizedInts (10^8)) (\ ~[a,b,c] -> 
-            bgroup "Benchmarking random input with size 10^8" 
-                [bench "exM" $ whnf (exM a b) c 
+        ,env (sizedInts (10^8)) (\ ~[a,b,c] ->
+            bgroup "Benchmarking random input with size 10^8"
+                [bench "exM" $ whnf (exM a b) c
                 ,bench "expM" $ whnf (expM a b) c])]
 
 {-
@@ -278,13 +279,20 @@ expectedPassRate :: Fractional a => Int -> Int -> a
 expectedPassRate n k = (fromIntegral (ncoprimes m) / fromIntegral (m - 2)) ^ k
     where m = carmichael !! n
 
-binom :: Int -> Int -> Int
-binom n 0 = 1
-binom 0 k = 0
-binom n k = binom (n-1) (k-1) * n `div` k
+binomTest :: Int -> Double -> Int -> Double
+binomTest n p k
+  | k < 0 || k > n = 0
+  | n == 0         = 1
+  | n < 1000       = choose n k * p^k * (1-p)^(n-k)
+  | otherwise      = exp $ logChoose n k + log p * k' + log1p (-p) * nk'
+  where
+    k'  = fromIntegral k
+    nk' = fromIntegral $ n - k
 
-binomTest :: Int -> Int -> Float -> Float
-binomTest k n p = (fromIntegral (binom n k)) * (p^(fromIntegral k)) * ((1 - p)^(n - k))
+testPrimalityCarmichael :: IO [Bool]
+testPrimalityCarmichael = do
+    successes <- sequence $ fmap (\_ -> primeTestsF 1 (head (take 1 carmichael))) [1..100]
+    return successes
 
 leastComposites' :: IO ()
 leastComposites' = do
@@ -299,7 +307,8 @@ leastComposites' = do
     print =<< modalComposites [1, 2, 3, 5, 7] 10 carmichael
 
     print "4.2"
-    -- Check todo
+    k <- testPrimalityCarmichael
+    print $ "p-value for the Fermat's test: " ++ show (binomTest 100 0.95 (length (filter (==True) k)))
 
     print "4.3"
     let leastComposite' k = fix (\f (x:xs) -> do b <- primeMR k x; if b then return x else f xs)
