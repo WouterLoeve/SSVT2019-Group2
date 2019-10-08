@@ -25,6 +25,7 @@ testRunHelper testName numCases numPass = do
 
 {-
  - Exercise 1
+ - exM implementation is in Lecture5.hs!
 -}
 
 {-
@@ -434,7 +435,12 @@ testTrees = do
  - We test these properties for a single key (so with multiple messages) using rsaTest
  - rsaTestMult tests the aforementioned function a number of times (see Main.hs).
  - The key length we use is 1024, since that keeps the algorithm runnable in reasonable time for multiple runs.
+ - Another thing is that according to the wikipedia article above, RSA can be vulnerable to known plaintext attacks 
+    if no padding is used. 
+ - Our implementation does not feature padding. This would be future work.
+ - Another thing that needs to be investigated is the security of this particular implementation of RSA.
 -}
+
 {-
  - Check whether two primes are of the same bitlength
  -}
@@ -541,13 +547,13 @@ prop_encIsDecrypt val e d n = val == rsaDecode (d, n) (rsaEncode (e, n) val)
  - function would satisfy the prop_encIsDecrypt property.
  -}
 prop_encDoesSomething :: Integer -> Integer -> Integer -> Integer -> Property
-prop_encDoesSomething val e d n = val > 1 ==> (rsaEncode (e, n) val) /= val
+prop_encDoesSomething val e d n = val > 1 ==> rsaEncode (e, n) val /= val
 
 {-
  - Same as the encDoesSomething but for decrypt.
  -}
 prop_decDoesSomething :: Integer -> Integer -> Integer -> Integer -> Property
-prop_decDoesSomething val e d n = val > 1 ==> (rsaDecode (d, n) val) /= val
+prop_decDoesSomething val e d n = val > 1 ==> rsaDecode (d, n) val /= val
 
 {-
  - Tests the rsaTest function by calling it an x amount of times.
