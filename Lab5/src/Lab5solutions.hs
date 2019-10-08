@@ -231,7 +231,6 @@ leastComposites = do
  - The formula for this is ((ncoprimes n) / (n - 2))^k.
  - The base pass rate (k=1) of the first carmichael number 294409 is ~0.95%.
  - Thus we expect ~(0.95^k)% of least composites to be the first carmichael number.
- -  TODO: We can use this to test the Fermat primality test function. Use binomial test for that.
  - In fact, we expect the first number to be most common until around k=14, since 0.95^k > 0.5 for 0 < k < 14.
 -}
 carmichael :: [Integer]
@@ -246,12 +245,16 @@ ncoprimes n = length $ filter (\m -> gcd n m == 1) [2..n-1]
 
 {- The expected rate at which the nth carmichael number fools the Fermat test for k trials.
  - Note: please don't run this for any n > 0 (or maybe n = 1 if compiled).
- - I really just intend this to be used to check the proportion of first (zero-th) carmichaels passing the test.
+ - We intend this to be used to check the proportion of first (zero-th) carmichaels passing the test.
 -}
 expectedPassRate :: Fractional a => Int -> Int -> a
 expectedPassRate n k = (fromIntegral (ncoprimes m) / fromIntegral (m - 2)) ^ k
     where m = carmichael !! n
 
+{- Source: https://hackage.haskell.org/package/statistics-0.15.0.0/docs/src/Statistics.Distribution.Binomial.html#binomial
+ - Implements the binomial distribution formula to compute the p-value
+ - which indicates the significance of our results.
+-}
 binomTest :: Int -> Double -> Int -> Double
 binomTest n p k
   | k < 0 || k > n = 0
@@ -262,6 +265,10 @@ binomTest n p k
     k'  = fromIntegral k
     nk' = fromIntegral $ n - k
 
+{- We run the Fermat's primality test 1000 times on the first carmichael number,
+ - and return the list of booleans from which each boolean tell us if the
+ - number has fooled the primality test or not.
+-}
 testPrimalityCarmichael :: IO [Bool]
 testPrimalityCarmichael = do
     successes <- sequence $ fmap (\_ -> primeTestsF 1 (head (take 1 carmichael))) [1..1000]
@@ -314,7 +321,7 @@ mersprimes = [mers x | x <- [1..25]]
  - With this function we print the first x primes.
  - Then for k, 0 to 4 we check the number of falsely generated primes for our function.
         In which k is the number of rounds used for the miller rabin primality check.
- - We found that the number of falsely generated primes decreases fast by increasing k. 
+ - We found that the number of falsely generated primes decreases fast by increasing k.
  - If we set k = 0; we can see how often the property if p = prime, 2^p - 1 is also prime holds.
  - On a recent desktop we were able to generate 23 mersenne primes with k=1, excluding the error rate computation.
  -}
@@ -340,7 +347,7 @@ someMPrimes x = do
     print $ "Error rate over the first " ++ show x ++ " primes; k = 4: " ++ show rate4 ++ " / " ++ show (num*x)
 
 {-
- - To check for fake mersenne primes we check the list of mersenne primes defined in the lecture code and 
+ - To check for fake mersenne primes we check the list of mersenne primes defined in the lecture code and
  - see whether our generated numbers are in that list.
  -}
 checkForErrorRate :: Int -> Int -> Int -> Int -> IO Int
@@ -367,7 +374,7 @@ step2 n = \ (x,y) -> if x+y <= n then [(x+y,y),(x,x+y)] else [] -- step function
  - The given tree generation function `step` does the reverse of euclid's GCD algorithm.
  - So if  supply a starting value of (1,1), we would end up generating all coprime pairs.
  - The explanation was already given in the answers to workhop 5.
- 
+
  - Changing [(x+y,x),(x,x+y)] to [(x+y,y),(x,x+y)] changes only the symmetry from subtree-symmetric
  - to y-axis symmetric. Changing symmetry does not alter content, so tree1 and tree2 contain the same values
  - and are therefore both proven by the euclidan GCD proof.
@@ -377,7 +384,7 @@ step2 n = \ (x,y) -> if x+y <= n then [(x+y,y),(x,x+y)] else [] -- step function
  -             (2,1)-------------+-------------(1,2)
  -     (3,2)-----+-----(2,3)           (3,1)-----+-----(1,3)
  - (5,3)-+-(3,5)   (5,2)-+-(2,5)   (4,3)-+-(3,4)   (4,1)-+-(1,4)
- - 
+ -
  -                           ==Tree2==
  -                             (1,1)
  -             (2,1)-------------+-------------(1,2)
@@ -394,10 +401,10 @@ prop_CoPrimeTree :: (Integer -> Tree (Integer, Integer)) -> Integer -> Bool
 prop_CoPrimeTree tree n = sort (collect' (tree n)) == sort ([(x, y) | x <- [1..n], y <- [1..n], gcd x y == 1])
 
 {-
- - From our example we learned that tree1 and tree2 are the same but mirrored. 
+ - From our example we learned that tree1 and tree2 are the same but mirrored.
  -}
 prop_sameTree :: Integer -> Bool
-prop_sameTree n = sort (collect' (tree1 n)) == sort (collect' (tree2 n)) 
+prop_sameTree n = sort (collect' (tree1 n)) == sort (collect' (tree2 n))
 
 {-
  - Produces a list of all tree nodes
@@ -425,7 +432,7 @@ testTrees = do
  - Time: 200 min
  - Source: https://en.wikipedia.org/wiki/RSA_(cryptosystem)
  - In this exercise we present our RSA implementation.
- - Instead of the given functions we implement our own encryption and decryption keys because we weren't 
+ - Instead of the given functions we implement our own encryption and decryption keys because we weren't
     satisfied with (partial lack of) random element they presented.
  - We test three properties:
     - Whether encrypting and decrypting in succession results in the original message.
@@ -520,7 +527,7 @@ genRSAencrypt tot = do
 {-
  - Generates a decryption key given a totient value and an encryption key.
  - This is equal to the multiplicative inverse of e meaning that:
-        e * d = 1 mod n 
+        e * d = 1 mod n
         with n being the totient function.
         e is the encryption key.
  -}
