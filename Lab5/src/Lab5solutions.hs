@@ -226,7 +226,7 @@ leastComposites = do
  - Thus a carmichael number will fool the Fermat primality test if only coprime a's are picked.
  - The generated list is a subset of the carmichael numbers.
  -
- - We expect the carmichael numbers to fool the Fermat primality test most of the time.
+ - We expect the carmichael numbers to fool the Fermat primality test most of the time (= if only coprimes are picked).
  - The proportion of this depends on the number of coprimes and amount of a's picked k.
  - The formula for this is ((ncoprimes n) / (n - 2))^k.
  - The base pass rate (k=1) of the first carmichael number 294409 is ~0.95%.
@@ -287,8 +287,17 @@ leastComposites' = do
     print =<< modalComposites [1, 2, 3, 5, 7] 10 carmichael
 
     print "4.2"
-    k <- testPrimalityCarmichael
-    print $ "p-value for the Fermat's test: " ++ show (binomTest 1000 0.95 (length (filter (==True) k)))
+    results <- testPrimalityCarmichael
+    let n = 1000
+    let p = 0.95
+    let e = 950
+    let a = 0.05
+    let k = length (filter (==True) results)
+    let d = abs e - k
+    let pval = binomTest n p k / (sum $ binomTest n p <$> [e + d..n] ++ [0..e - d])
+    print $ "observed times fooled: " ++ show k ++ " (expected " ++ show e ++ ")"
+    print $ "two-tailed p-value for the Fermat's test with n = " ++ show n ++ ", p = 0.95: " ++ show pval
+    print $ "correct with confidence " ++ show a ++ ": " ++ show (a > pval) 
 
     print "4.3"
     let leastComposite' k = fix (\f (x:xs) -> do b <- primeMR k x; if b then return x else f xs)
